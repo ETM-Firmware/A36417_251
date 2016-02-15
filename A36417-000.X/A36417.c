@@ -33,7 +33,7 @@ IonPumpControlData global_data_A36417_000;
 #define STATE_STARTUP                0x10
 #define STATE_SELF_TEST              0x20
 #define STATE_OPERATE                0x30
-#define STATE_FAULT                  0x40
+#define STATE_OVER_CURRENT           0x40
 
 int main (void){
     global_data_A36417_000.control_state = STATE_STARTUP;
@@ -56,6 +56,7 @@ void DoStateMachine(void){
            _CONTROL_NOT_READY = 1;
            global_data_A36417_000.EMCO_enable = 1;
            global_data_A36417_000.self_test_count = 0;
+           _STATUS_ION_PUMP_HAS_OVER_CURRENT = 0;
            while (global_data_A36417_000.control_state == STATE_SELF_TEST) {
              DoA36417_000();
              if (global_data_A36417_000.self_test_count >= SELF_TEST_TIME) {
@@ -63,8 +64,8 @@ void DoStateMachine(void){
                if(Check_Faults() == 0) {
                  global_data_A36417_000.control_state = STATE_OPERATE;
                }
-               if (_FAULT_ION_PUMP_OVER_VOLTAGE) {
-                 global_data_A36417_000.control_state = STATE_FAULT;
+               if (_FAULT_ION_PUMP_OVER_CURRENT) {
+                 global_data_A36417_000.control_state = STATE_OVER_CURRENT;
                }
              }
            }
@@ -73,30 +74,33 @@ void DoStateMachine(void){
         case STATE_OPERATE:
             _CONTROL_NOT_READY = 0;
             global_data_A36417_000.EMCO_enable = 1;
-
+            _STATUS_ION_PUMP_HAS_OVER_CURRENT = 0;
             while (global_data_A36417_000.control_state == STATE_OPERATE) {
               DoA36417_000();
               if (Check_Faults()) {
                 global_data_A36417_000.control_state = STATE_SELF_TEST;
               }
-              if (_FAULT_ION_PUMP_OVER_VOLTAGE) {
-                global_data_A36417_000.control_state = STATE_FAULT;
+              if (_FAULT_ION_PUMP_OVER_CURRENT) {
+                global_data_A36417_000.control_state = STATE_OVER_CURRENT;
               }
             }
             break;
-
-       case STATE_FAULT:
+            
+        case STATE_OVER_CURRENT:
             _CONTROL_NOT_READY = 1;
-            global_data_A36417_000.EMCO_enable = 0;
-            while (global_data_A36417_000.control_state == STATE_FAULT) {
+            _STATUS_ION_PUMP_HAS_OVER_CURRENT = 1;
+            global_data_A36417_000.current_below_limit = 0;
+            while (global_data_A36417_000.control_state == STATE_OVER_CURRENT) {
               DoA36417_000();
-              if (global_data_A36417_000.reset_active) {
-	        Reset_Faults();
-	        global_data_A36417_000.control_state = STATE_SELF_TEST;
-	        global_data_A36417_000.reset_active = 0;
+              if (global_data_A36417_000.current_below_limit) {
+                _STATUS_ION_PUMP_HAS_OVER_CURRENT = 0;
               }
+              if (_FAULT_ION_PUMP_OVER_CURRENT == 0) {
+                global_data_A36417_000.control_state = STATE_SELF_TEST;
+              }              
             }            
             break;
+
 
         default:
             global_data_A36417_000.control_state = STATE_STARTUP;
@@ -130,7 +134,11 @@ void DoA36417_000(void){
 #endif
 
 
-  _FAULT_CAN_COMMUNICATION = ETMCanSlaveGetComFaultStatus();
+    if (ETMCanSlaveGetComFaultStatus()) {
+      _FAULT_CAN_COMMUNICATION = 1;
+    } else if (global_data_A36417_000.reset_active) {
+      _FAULT_CAN_COMMUNICATION = 0;
+    }
 
   if(_T3IF){
  
@@ -177,38 +185,32 @@ void DoA36417_000(void){
 
     if (ETMCanSlaveGetSyncMsgResetEnable()) {
       global_data_A36417_000.reset_active = 1;
-      _FAULT_REGISTER = 0x0000;
+    } else {
+      global_data_A36417_000.reset_active = 0;
     }
 
     if (ETMAnalogCheckUnderAbsolute(&global_data_A36417_000.analog_input_ion_pump_voltage)) {
-        _FAULT_ION_PUMP_UNDER_VOLTAGE=1;
-    }else{
-        _FAULT_ION_PUMP_UNDER_VOLTAGE=0;
+        _FAULT_ION_PUMP_UNDER_VOLTAGE = 1;
+    } else if (global_data_A36417_000.reset_active) {
+        _FAULT_ION_PUMP_UNDER_VOLTAGE = 0;
     }
 
-    if (ETMAnalogCheckOverAbsolute(&global_data_A36417_000.analog_input_ion_pump_voltage)) {
-        _FAULT_ION_PUMP_OVER_VOLTAGE=1;
-    }else{
-        _FAULT_ION_PUMP_OVER_VOLTAGE=0;
+    if (global_data_A36417_000.analog_input_ion_pump_current.reading_scaled_and_calibrated <= CURRENT_LOWER_THRESHOLD) {
+      global_data_A36417_000.current_below_limit = 1;
     }
-
 
     if (ETMAnalogCheckOverAbsolute(&global_data_A36417_000.analog_input_ion_pump_current)) {
-        _FAULT_ION_PUMP_OVER_CURRENT=1;
-    }else{
-        _FAULT_ION_PUMP_OVER_CURRENT=0;
+        _FAULT_ION_PUMP_OVER_CURRENT = 1;
+    } else if (global_data_A36417_000.reset_active && global_data_A36417_000.current_below_limit) {
+        _FAULT_ION_PUMP_OVER_CURRENT = 0;
     }
-
-  }
+    
   return;
 }
 
 unsigned int Check_Faults(void) {
     unsigned int fault;
-
-    fault  = _FAULT_ION_PUMP_OVER_CURRENT;
-    fault |= _FAULT_ION_PUMP_UNDER_VOLTAGE;
-    fault |= _FAULT_CAN_COMMUNICATION;
+    fault = _FAULT_CAN_COMMUNICATION || _FAULT_ION_PUMP_UNDER_VOLTAGE;
 
     return fault;
 }
@@ -216,7 +218,6 @@ unsigned int Check_Faults(void) {
 
 void Reset_Faults(void) {
     _FAULT_ION_PUMP_OVER_CURRENT = 0;
-    _FAULT_ION_PUMP_OVER_VOLTAGE = 0;
     _FAULT_ION_PUMP_UNDER_VOLTAGE = 0;
     _FAULT_CAN_COMMUNICATION = 0;
 
@@ -344,10 +345,10 @@ void InitializeA36417(void){
                            ANALOG_INPUT_0,
                            ION_PUMP_VOLTAGE_OVER_TRIP_POINT,
             	           ION_PUMP_VOLTAGE_UNDER_TRIP_POINT,
-			   NO_TRIP_SCALE,
-			   NO_FLOOR,
-			   NO_RELATIVE_COUNTER,
-			   ION_PUMP_VOLTAGE_ABSOLUTE_TRIP_TIME);
+                           NO_TRIP_SCALE,
+                           NO_FLOOR,
+                           NO_RELATIVE_COUNTER,
+                           ION_PUMP_VOLTAGE_ABSOLUTE_TRIP_TIME);
 
   ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_ion_pump_current,
                            MACRO_DEC_TO_SCALE_FACTOR_16(ION_PUMP_CURRENT_SCALE_FACTOR),
@@ -355,10 +356,10 @@ void InitializeA36417(void){
                            ANALOG_INPUT_1,
                            ION_PUMP_CURRENT_OVER_TRIP_POINT,
             	           ION_PUMP_CURRENT_UNDER_TRIP_POINT,
-			   NO_TRIP_SCALE,
-			   NO_FLOOR,
-			   NO_RELATIVE_COUNTER,
-			   ION_PUMP_CURRENT_ABSOLUTE_TRIP_TIME);
+                           NO_TRIP_SCALE,
+                           NO_FLOOR,
+                           NO_RELATIVE_COUNTER,
+                           ION_PUMP_CURRENT_ABSOLUTE_TRIP_TIME);
 
 #ifdef TARGET_CURRENT
   ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_target_current,
@@ -367,10 +368,10 @@ void InitializeA36417(void){
                            ANALOG_INPUT_2,
                            TARGET_CURRENT_OVER_TRIP_POINT,
             	           TARGET_CURRENT_UNDER_TRIP_POINT,
-			   NO_TRIP_SCALE,
-			   NO_FLOOR,
-			   NO_RELATIVE_COUNTER,
-			   TARGET_CURRENT_ABSOLUTE_TRIP_TIME);
+                           NO_TRIP_SCALE,
+                           NO_FLOOR,
+                           NO_RELATIVE_COUNTER,
+                           TARGET_CURRENT_ABSOLUTE_TRIP_TIME);
 #endif
 
   ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_5V_monitor,
@@ -379,10 +380,10 @@ void InitializeA36417(void){
                            ANALOG_INPUT_3,
                            _5V_MONITOR_OVER_TRIP_POINT,
             	           _5V_MONITOR_UNDER_TRIP_POINT,
-			   NO_TRIP_SCALE,
-			   NO_FLOOR,
-			   NO_COUNTER,
-			   NO_COUNTER);
+                           NO_TRIP_SCALE,
+                           NO_FLOOR,
+                           NO_COUNTER,
+                           NO_COUNTER);
 
   ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_15V_monitor,
                            MACRO_DEC_TO_SCALE_FACTOR_16(_15V_MONITOR_SCALE_FACTOR),
@@ -390,10 +391,10 @@ void InitializeA36417(void){
                            ANALOG_INPUT_4,
                            _15V_MONITOR_OVER_TRIP_POINT,
             	           _15V_MONITOR_UNDER_TRIP_POINT,
-			   NO_TRIP_SCALE,
-			   NO_FLOOR,
-			   NO_COUNTER,
-			   NO_COUNTER);
+                           NO_TRIP_SCALE,
+                           NO_FLOOR,
+                           NO_COUNTER,
+                           NO_COUNTER);
 
   ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_minus_5V_monitor,
                            MACRO_DEC_TO_SCALE_FACTOR_16(MINUS_5V_MONITOR_SCALE_FACTOR),
@@ -401,10 +402,10 @@ void InitializeA36417(void){
                            ANALOG_INPUT_5,
                            MINUS_5V_MONITOR_OVER_TRIP_POINT,
             	           MINUS_5V_MONITOR_UNDER_TRIP_POINT,
-			   NO_TRIP_SCALE,
-			   NO_FLOOR,
-			   NO_COUNTER,
-			   NO_COUNTER);
+                           NO_TRIP_SCALE,
+                           NO_FLOOR,
+                           NO_COUNTER,
+                           NO_COUNTER);
 
 
 // Startup LEDs

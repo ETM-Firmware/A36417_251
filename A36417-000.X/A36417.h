@@ -51,6 +51,7 @@ typedef struct{
     unsigned int control_state;
     unsigned int target_current_high;
     unsigned int target_current_low;
+    unsigned int current_below_limit;             // Is current below threshold where over current fault can be cleared?
 
     unsigned int trigger_recieved;
     unsigned int sample_level;
@@ -123,10 +124,14 @@ extern IonPumpControlData global_data_A36417_000;
 
 
 // -------------------- A36417_000 FAULTS/WARNINGS CONFIGURATION-------------------- //
+
 #define _FAULT_CAN_COMMUNICATION                 _FAULT_0
 #define _FAULT_ION_PUMP_OVER_CURRENT             _FAULT_1
 #define _FAULT_ION_PUMP_OVER_VOLTAGE             _FAULT_2
 #define _FAULT_ION_PUMP_UNDER_VOLTAGE            _FAULT_3
+
+#define _STATUS_ION_PUMP_HAS_OVER_CURRENT        _WARNING_0
+
 //#define _FAULT_5V_OV                             _FAULT_4
 //#define _FAULT_5V_UV                             _FAULT_5
 //#define _FAULT_15V_OV                            _FAULT_6
@@ -217,6 +222,7 @@ RF3  (DAC LDAC)
 #define A36417_TRISD_VALUE 0b0000000000000000
 #define A36417_TRISF_VALUE 0b0000000101001111
 #define A36417_TRISG_VALUE 0b0000000000000000
+
 
 
 #define SELF_TEST_TIME                      100    // 1sec
