@@ -176,8 +176,9 @@ void DoA36417_000(void){
     ETMCanSlaveSetDebugRegister(1, global_data_A36417_000.analog_input_5V_monitor.reading_scaled_and_calibrated);
     ETMCanSlaveSetDebugRegister(2, global_data_A36417_000.analog_input_15V_monitor.reading_scaled_and_calibrated);
     ETMCanSlaveSetDebugRegister(3, global_data_A36417_000.analog_input_minus_5V_monitor.reading_scaled_and_calibrated);
+    ETMCanSlaveSetDebugRegister(0xE, _STATUS_ION_PUMP_HAS_OVER_CURRENT);
     ETMCanSlaveSetDebugRegister(0xF, global_data_A36417_000.control_state);
-
+    
     global_data_A36417_000.self_test_count++;
 
 
@@ -204,8 +205,9 @@ void DoA36417_000(void){
     } else if (global_data_A36417_000.reset_active && global_data_A36417_000.current_below_limit) {
         _FAULT_ION_PUMP_OVER_CURRENT = 0;
     }
-    
+  }  
   return;
+  
 }
 
 unsigned int Check_Faults(void) {
@@ -223,7 +225,7 @@ void Reset_Faults(void) {
 
 }
 
-double UpdatePID(SPid* pid, double error, double reading){
+double UpdatePID(SPid* pid, double error, double reading) {
   double pTerm, dTerm, iTerm;
   pTerm = pid->pGain * error;
 
@@ -253,7 +255,7 @@ double UpdatePID(SPid* pid, double error, double reading){
 }
 
 
-void InitializeA36417(void){
+void InitializeA36417(void) {
 
   unsigned int startup_counter;
 
