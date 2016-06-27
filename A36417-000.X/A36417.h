@@ -228,12 +228,12 @@ RF3  (DAC LDAC)
 #define SELF_TEST_TIME                      100    // 1sec
 
 #define EMCO_SETPOINT                       3000   // 3V --> 3kV
-#define DAC_SETPOINT_CAP                    2500   // 2.5V
+#define DAC_SETPOINT_CAP                    0xFFF   // 2.5V
 
 #define PID_DGAIN                           .06
 #define PID_IGAIN                           .05
 #define PID_PGAIN                           .05
-#define PID_IMAX                            50000
+#define PID_IMAX                            100000
 #define PID_IMIN                            0
 
 #endif	/* A36417_H */
