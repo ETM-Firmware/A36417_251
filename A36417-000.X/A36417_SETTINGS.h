@@ -15,7 +15,7 @@
 #define ION_PUMP_VOLTAGE_ABSOLUTE_TRIP_TIME      5000                 // This is in 10ms Units
 
 #define ION_PUMP_CURRENT_SCALE_FACTOR            .50863            
-#define ION_PUMP_CURRENT_OVER_TRIP_POINT         5000               // 50uA this is in 10nA units
+#define ION_PUMP_CURRENT_OVER_TRIP_POINT         4000               // 40uA this is in 10nA units
 #define ION_PUMP_CURRENT_UNDER_TRIP_POINT        0                  //
 #define ION_PUMP_CURRENT_ABSOLUTE_TRIP_TIME      200                 // This is in 10ms Units
 
