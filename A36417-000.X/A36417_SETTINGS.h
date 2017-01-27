@@ -1,12 +1,12 @@
 /* 
- * File:   A36417_SETTINGS.h
- * Author: hwanetick
+ * File:   A37497_SETTINGS.h
+ * Author: hwanetick, dparker
  *
  * Created on December 21, 2015, 10:18 AM
  */
 
-#ifndef A36417_SETTINGS_H
-#define	A36417_SETTINGS_H
+#ifndef A37497_SETTINGS_H
+#define	A37497_SETTINGS_H
 
 
 #define ION_PUMP_VOLTAGE_SCALE_FACTOR            .0763              //1V per 1kV
@@ -39,5 +39,5 @@
 #define MINUS_5V_MONITOR_UNDER_TRIP_POINT        1570
 
 
-#endif	/* A36417_SETTINGS_H */
+#endif	/* A37497_SETTINGS_H */
 

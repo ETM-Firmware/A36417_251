@@ -1,12 +1,12 @@
 /* 
- * File:   A36417.h
- * Author: cosorio
+ * File:   A37497.h
+ * Author: cosorio, dparker
  *
  * Created on January 5, 2015, 3:28 PM
  */
 
-#ifndef __A36417_H
-#define	__A36417_H
+#ifndef __A37497_H
+#define	__A37497_H
 
 #include <p30f6014a.h>
 #include <libpic30.h>
@@ -24,60 +24,60 @@
  *
  * Hardware Module Resource Usage
 
-  CAN1   - Used/Configured by ETM CAN
-  Timer2(will change to 4) - Used/Configured by ETM CAN - Used to Time sending of messages (status update / logging data and such)
-  Timer3(will change to 5) - Used/Configured by ETM CAN - Used for detecting error on can bus
+ CAN1   - Used/Configured by ETM CAN
+ Timer2(will change to 4) - Used/Configured by ETM CAN - Used to Time sending of messages (status update / logging data and such)
+ Timer3(will change to 5) - Used/Configured by ETM CAN - Used for detecting error on can bus
 
-  I2C    - Used/Configured by EEPROM Module
+ I2C    - Used/Configured by EEPROM Module
 
-  Timer4(will change to 2) - Used for looking at time between pulses
-  Timer5(will change to 3) - Used for 10msTicToc
+ Timer4(will change to 2) - Used for looking at time between pulses
+ Timer5(will change to 3) - Used for 10msTicToc
 
-  ADC Module - See Below For Specifics
+ ADC Module - See Below For Specifics
 
   
- */
+*/
 
 typedef struct{
-    AnalogInput analog_input_ion_pump_current;
-    AnalogInput analog_input_ion_pump_voltage;
-    AnalogInput analog_input_target_current;
-    AnalogInput analog_input_5V_monitor;
-    AnalogInput analog_input_15V_monitor;
-    AnalogInput analog_input_minus_5V_monitor;
-    AnalogOutput analog_output_emco_control;
+  AnalogInput analog_input_ion_pump_current;
+  AnalogInput analog_input_ion_pump_voltage;
+  AnalogInput analog_input_target_current;
+  AnalogInput analog_input_5V_monitor;
+  AnalogInput analog_input_15V_monitor;
+  AnalogInput analog_input_minus_5V_monitor;
+  AnalogOutput analog_output_emco_control;
 
-    unsigned int accumulator_counter;
-    unsigned int control_state;
-    unsigned int target_current_high;
-    unsigned int target_current_low;
-    unsigned int current_below_limit;             // Is current below threshold where over current fault can be cleared?
+  unsigned int accumulator_counter;
+  unsigned int control_state;
+  unsigned int target_current_high;
+  unsigned int target_current_low;
+  unsigned int current_below_limit;             // Is current below threshold where over current fault can be cleared?
 
-    unsigned int trigger_recieved;
-    unsigned int sample_level;
-    unsigned int pulse_id;
-    unsigned int EMCO_control_setpoint;
-    unsigned int EMCO_enable;
-    unsigned int self_test_count;
-    unsigned int reset_active;
+  unsigned int trigger_recieved;
+  unsigned int sample_level;
+  unsigned int pulse_id;
+  unsigned int EMCO_control_setpoint;
+  unsigned int EMCO_enable;
+  unsigned int self_test_count;
+  unsigned int reset_active;
     
 }IonPumpControlData;
 
 
 typedef struct{
-    double dState;
-    double iState;
-    double iMax, iMin;
+  double dState;
+  double iState;
+  double iMax, iMin;
 
-    double iGain;
-    double pGain;
-    double dGain;
+  double iGain;
+  double pGain;
+  double dGain;
 
 }SPid;
 
 
 double UpdatePID(SPid* pid, double error, double reading);
-extern IonPumpControlData global_data_A36417_000;
+extern IonPumpControlData global_data_A37497;
 // ------------------------ CONFIGURE ADC MODULE ------------------- //
 
 
@@ -112,10 +112,10 @@ extern IonPumpControlData global_data_A36417_000;
 
 
 /*
-   TMR3 Configuration
-   Timer3 - Used for 10msTicToc
-   Period should be set to 10mS
-   With 10Mhz Clock, x8 multiplier will yield max period of 17.7mS, 2.71uS per tick
+  TMR3 Configuration
+  Timer3 - Used for 10msTicToc
+  Period should be set to 10mS
+  With 10Mhz Clock, x8 multiplier will yield max period of 17.7mS, 2.71uS per tick
 */
 
 #define T3CON_VALUE                    (T3_ON & T3_IDLE_CON & T3_GATE_OFF & T3_PS_1_8 & T3_SOURCE_INT)
@@ -123,7 +123,7 @@ extern IonPumpControlData global_data_A36417_000;
 #define PR3_VALUE_10_MILLISECONDS      12500   //(FCY_CLK_MHZ*PR3_PERIOD_US/8)
 
 
-// -------------------- A36417_000 FAULTS/WARNINGS CONFIGURATION-------------------- //
+// -------------------- A37497 FAULTS/WARNINGS CONFIGURATION-------------------- //
 
 #define _FAULT_CAN_COMMUNICATION                 _FAULT_0
 #define _FAULT_ION_PUMP_OVER_CURRENT             _FAULT_1
@@ -142,29 +142,29 @@ extern IonPumpControlData global_data_A36417_000;
 
 /*
 
------------Digital Input Pins------------
+  -----------Digital Input Pins------------
 
-RA14 - Digital Input - Sample Target Current
+  RA14 - Digital Input - Sample Target Current
 */
 
 #define PIN_D_IN_SAMPLE_TARGET_CURRENT  _RA14
 
 /*
 
------------Digital Output Pins-------------
+  -----------Digital Output Pins-------------
 
-RA7 - Digital Output - LED Operational
-RA8 - Digital Output - Test Point E
-RA12 - Digital Output - Test Point C
-RA13 - Digital Output - Test Point D
+  RA7 - Digital Output - LED Operational
+  RA8 - Digital Output - Test Point E
+  RA12 - Digital Output - Test Point C
+  RA13 - Digital Output - Test Point D
 
-RB2 - Digital Output - Test Point F
-RB8 - Digital Output - Test Point G
-RB9 - Digital Output - Test Point H
+  RB2 - Digital Output - Test Point F
+  RB8 - Digital Output - Test Point G
+  RB9 - Digital Output - Test Point H
 
-RG12 - Digital Output - Led Test Point A
-RG13 - Digital Output - Led Test Point B
-RG14 - Digital Output - Reset detect
+  RG12 - Digital Output - Led Test Point A
+  RG13 - Digital Output - Led Test Point B
+  RG14 - Digital Output - Reset detect
 */
 
 #define OLL_LED_ON                  0
@@ -184,44 +184,44 @@ RG14 - Digital Output - Reset detect
 #define PIN_D_OUT_RESET_DETECT      _LATG14
 
 /*
--------------Analog Inputs-------------
+  -------------Analog Inputs-------------
 
-RB3 - Analog Input - Ion pump voltage
-RB4 - Analog Input - Ion pump current
-RB5 - Analog Input - 5V monitor
-RB6 - Analog Input - -5V monitor
-RB7 - Analog Input - -15v monitor
+  RB3 - Analog Input - Ion pump voltage
+  RB4 - Analog Input - Ion pump current
+  RB5 - Analog Input - 5V monitor
+  RB6 - Analog Input - -5V monitor
+  RB7 - Analog Input - -15v monitor
 
-RB10 - Analog Input - Target Current
+  RB10 - Analog Input - Target Current
 */
 
 
 /*
------------------Not used---------------
-RB11
-RB12
+  -----------------Not used---------------
+  RB11
+  RB12
 
---------- Pins that are overidden by a hardware module and should be left as inputs during port configuration ----
-RB0 - PROGRAM
-RB1 - PROGRAM
+  --------- Pins that are overidden by a hardware module and should be left as inputs during port configuration ----
+  RB0 - PROGRAM
+  RB1 - PROGRAM
 
-RF0 - CAN 1
-RF1 - CAN 1
-RF6 - SPI 1
-RF8 - SPI 1
+  RF0 - CAN 1
+  RF1 - CAN 1
+  RF6 - SPI 1
+  RF8 - SPI 1
 
--------- Pins that are configured by other software modules and should be left as inputs during port configuration -----------
-RF2 (DAC CS/LS)
-RF3  (DAC LDAC)
+  -------- Pins that are configured by other software modules and should be left as inputs during port configuration -----------
+  RF2 (DAC CS/LS)
+  RF3  (DAC LDAC)
 
 */
 
-#define A36417_TRISA_VALUE 0b1100000000000000
-#define A36417_TRISB_VALUE 0b0000010011111011
-#define A36417_TRISC_VALUE 0b0000000000000000
-#define A36417_TRISD_VALUE 0b0000000000000000
-#define A36417_TRISF_VALUE 0b0000000101001111
-#define A36417_TRISG_VALUE 0b0000000000000000
+#define A37497_TRISA_VALUE 0b1100000000000000
+#define A37497_TRISB_VALUE 0b0000010011111011
+#define A37497_TRISC_VALUE 0b0000000000000000
+#define A37497_TRISD_VALUE 0b0000000000000000
+#define A37497_TRISF_VALUE 0b0000000101001111
+#define A37497_TRISG_VALUE 0b0000000000000000
 
 
 
@@ -236,5 +236,5 @@ RF3  (DAC LDAC)
 #define PID_IMAX                            100000
 #define PID_IMIN                            0
 
-#endif	/* A36417_H */
+#endif	/* A37497_H */
 

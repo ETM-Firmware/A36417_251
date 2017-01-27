@@ -1,7 +1,5 @@
-
-
-#include "A36417.h"
-#include "A36417_SETTINGS.h"
+#include "A37497.h"
+#include "A37497_SETTINGS.h"
 #include "FIRMWARE_VERSION.h"
 
 _FOSC(ECIO & CSW_FSCM_OFF);
@@ -13,8 +11,8 @@ _FGS(CODE_PROT_OFF);
 _FICD(PGD);
 
 void DoStateMachine(void);
-void InitializeA36417(void);
-void DoA36417_000(void);
+void InitializeA37497(void);
+void DoA37497(void);
 void Reset_Faults(void);
 unsigned int Check_Faults(void);
 //unsigned int Check_Supplies(void);
@@ -28,7 +26,7 @@ unsigned int ADCDEBUG5;
 MCP4822 U11_MCP4822;
 
 SPid emco_pid;
-IonPumpControlData global_data_A36417_000;
+IonPumpControlData global_data_A37497;
 
 #define STATE_STARTUP                0x10
 #define STATE_SELF_TEST              0x20
@@ -36,174 +34,174 @@ IonPumpControlData global_data_A36417_000;
 #define STATE_OVER_CURRENT           0x40
 
 int main (void){
-    global_data_A36417_000.control_state = STATE_STARTUP;
-    while(1){
+  global_data_A37497.control_state = STATE_STARTUP;
+  while(1){
     DoStateMachine();
-    }
+  }
 }
 
 void DoStateMachine(void){
 
-   switch(global_data_A36417_000.control_state){
-        case STATE_STARTUP:
-            _CONTROL_NOT_READY = 1;
-            InitializeA36417();
-            Reset_Faults();
-            global_data_A36417_000.control_state = STATE_SELF_TEST;
-            break;
+  switch(global_data_A37497.control_state){
+  case STATE_STARTUP:
+    _CONTROL_NOT_READY = 1;
+    InitializeA37497();
+    Reset_Faults();
+    global_data_A37497.control_state = STATE_SELF_TEST;
+    break;
 
-       case STATE_SELF_TEST:
-           _CONTROL_NOT_READY = 1;
-           global_data_A36417_000.EMCO_enable = 1;
-           global_data_A36417_000.self_test_count = 0;
-           _STATUS_ION_PUMP_HAS_OVER_CURRENT = 0;
-           while (global_data_A36417_000.control_state == STATE_SELF_TEST) {
-             DoA36417_000();
-             if (global_data_A36417_000.self_test_count >= SELF_TEST_TIME) {
-               global_data_A36417_000.self_test_count = 0;
-               if(Check_Faults() == 0) {
-                 global_data_A36417_000.control_state = STATE_OPERATE;
-               }
-               if (_FAULT_ION_PUMP_OVER_CURRENT) {
-                 global_data_A36417_000.control_state = STATE_OVER_CURRENT;
-               }
-             }
-           }
-           break;
-
-        case STATE_OPERATE:
-            _CONTROL_NOT_READY = 0;
-            global_data_A36417_000.EMCO_enable = 1;
-            _STATUS_ION_PUMP_HAS_OVER_CURRENT = 0;
-            while (global_data_A36417_000.control_state == STATE_OPERATE) {
-              DoA36417_000();
-              if (Check_Faults()) {
-                global_data_A36417_000.control_state = STATE_SELF_TEST;
-              }
-              if (_FAULT_ION_PUMP_OVER_CURRENT) {
-                global_data_A36417_000.control_state = STATE_OVER_CURRENT;
-              }
-            }
-            break;
-            
-        case STATE_OVER_CURRENT:
-            _CONTROL_NOT_READY = 1;
-            _STATUS_ION_PUMP_HAS_OVER_CURRENT = 1;
-            global_data_A36417_000.current_below_limit = 0;
-            while (global_data_A36417_000.control_state == STATE_OVER_CURRENT) {
-              DoA36417_000();
-              if (global_data_A36417_000.current_below_limit) {
-                _STATUS_ION_PUMP_HAS_OVER_CURRENT = 0;
-              }
-              if (_FAULT_ION_PUMP_OVER_CURRENT == 0) {
-                global_data_A36417_000.control_state = STATE_SELF_TEST;
-              }              
-            }            
-            break;
-
-
-        default:
-            global_data_A36417_000.control_state = STATE_STARTUP;
-            break;
+  case STATE_SELF_TEST:
+    _CONTROL_NOT_READY = 1;
+    global_data_A37497.EMCO_enable = 1;
+    global_data_A37497.self_test_count = 0;
+    _STATUS_ION_PUMP_HAS_OVER_CURRENT = 0;
+    while (global_data_A37497.control_state == STATE_SELF_TEST) {
+      DoA37497();
+      if (global_data_A37497.self_test_count >= SELF_TEST_TIME) {
+	global_data_A37497.self_test_count = 0;
+	if(Check_Faults() == 0) {
+	  global_data_A37497.control_state = STATE_OPERATE;
+	}
+	if (_FAULT_ION_PUMP_OVER_CURRENT) {
+	  global_data_A37497.control_state = STATE_OVER_CURRENT;
+	}
+      }
     }
+    break;
+
+  case STATE_OPERATE:
+    _CONTROL_NOT_READY = 0;
+    global_data_A37497.EMCO_enable = 1;
+    _STATUS_ION_PUMP_HAS_OVER_CURRENT = 0;
+    while (global_data_A37497.control_state == STATE_OPERATE) {
+      DoA37497();
+      if (Check_Faults()) {
+	global_data_A37497.control_state = STATE_SELF_TEST;
+      }
+      if (_FAULT_ION_PUMP_OVER_CURRENT) {
+	global_data_A37497.control_state = STATE_OVER_CURRENT;
+      }
+    }
+    break;
+            
+  case STATE_OVER_CURRENT:
+    _CONTROL_NOT_READY = 1;
+    _STATUS_ION_PUMP_HAS_OVER_CURRENT = 1;
+    global_data_A37497.current_below_limit = 0;
+    while (global_data_A37497.control_state == STATE_OVER_CURRENT) {
+      DoA37497();
+      if (global_data_A37497.current_below_limit) {
+	_STATUS_ION_PUMP_HAS_OVER_CURRENT = 0;
+      }
+      if (_FAULT_ION_PUMP_OVER_CURRENT == 0) {
+	global_data_A37497.control_state = STATE_SELF_TEST;
+      }              
+    }            
+    break;
+
+
+  default:
+    global_data_A37497.control_state = STATE_STARTUP;
+    break;
+  }
 }
 
-void DoA36417_000(void){
+void DoA37497(void){
 
   ETMCanSlaveDoCan();
 
 #ifdef TARGET_CURRENT
-//  if (global_data_A36417_000.trigger_recieved) {    
-//    if (global_data_A36417_000.sample_level) {
-//      //ETMCanSlaveIonPumpSendTargetCurrentReading(0x2002, 0x0000, global_data_A36417_000.pulse_id);
-//    } else {
-//      //ETMCanSlaveIonPumpSendTargetCurrentReading(0x0000, 0x1001, global_data_A36417_000.pulse_id);
-//    }
-//    global_data_A36417_000.trigger_recieved = 0;
-//  }
+  //  if (global_data_A37497.trigger_recieved) {    
+  //    if (global_data_A37497.sample_level) {
+  //      //ETMCanSlaveIonPumpSendTargetCurrentReading(0x2002, 0x0000, global_data_A37497.pulse_id);
+  //    } else {
+  //      //ETMCanSlaveIonPumpSendTargetCurrentReading(0x0000, 0x1001, global_data_A37497.pulse_id);
+  //    }
+  //    global_data_A37497.trigger_recieved = 0;
+  //  }
   
-    //If a target pulse was received
-  ETMAnalogScaleCalibrateADCReading(&global_data_A36417_000.analog_input_target_current);
+  //If a target pulse was received
+  ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_target_current);
 
   if (high energy pulse) {
-    global_data_A36417_000.target_current_high = global_data_A36417_000.analog_input_target_current.reading_scaled_and_calibrated;
+    global_data_A37497.target_current_high = global_data_A37497.analog_input_target_current.reading_scaled_and_calibrated;
   }
   else if (low energy pulse) {
-    global_data_A36417_000.target_current_low = global_data_A36417_000.analog_input_target_current.reading_scaled_and_calibrated;
+    global_data_A37497.target_current_low = global_data_A37497.analog_input_target_current.reading_scaled_and_calibrated;
   }
 #endif
 
 
-    if (ETMCanSlaveGetComFaultStatus()) {
-      _FAULT_CAN_COMMUNICATION = 1;
-    } else if (global_data_A36417_000.reset_active) {
-      _FAULT_CAN_COMMUNICATION = 0;
-    }
+  if (ETMCanSlaveGetComFaultStatus()) {
+    _FAULT_CAN_COMMUNICATION = 1;
+  } else if (global_data_A37497.reset_active) {
+    _FAULT_CAN_COMMUNICATION = 0;
+  }
 
   if(_T3IF){
  
-    slave_board_data.log_data[2] = global_data_A36417_000.analog_input_ion_pump_voltage.reading_scaled_and_calibrated;
-    slave_board_data.log_data[3] = global_data_A36417_000.analog_input_ion_pump_current.reading_scaled_and_calibrated;
+    slave_board_data.log_data[2] = global_data_A37497.analog_input_ion_pump_voltage.reading_scaled_and_calibrated;
+    slave_board_data.log_data[3] = global_data_A37497.analog_input_ion_pump_current.reading_scaled_and_calibrated;
 
     _T3IF=0;
 
-    ETMAnalogScaleCalibrateADCReading(&global_data_A36417_000.analog_input_ion_pump_voltage);
-    ETMAnalogScaleCalibrateADCReading(&global_data_A36417_000.analog_input_ion_pump_current);
-    ETMAnalogScaleCalibrateADCReading(&global_data_A36417_000.analog_input_target_current);
-    ETMAnalogScaleCalibrateADCReading(&global_data_A36417_000.analog_input_5V_monitor);
-    ETMAnalogScaleCalibrateADCReading(&global_data_A36417_000.analog_input_15V_monitor);
-    ETMAnalogScaleCalibrateADCReading(&global_data_A36417_000.analog_input_minus_5V_monitor);
+    ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_ion_pump_voltage);
+    ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_ion_pump_current);
+    ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_target_current);
+    ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_5V_monitor);
+    ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_15V_monitor);
+    ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_minus_5V_monitor);
 
-    unsigned int ion_pump_voltage = global_data_A36417_000.analog_input_ion_pump_voltage.reading_scaled_and_calibrated;
+    unsigned int ion_pump_voltage = global_data_A37497.analog_input_ion_pump_voltage.reading_scaled_and_calibrated;
 
-    if (global_data_A36417_000.EMCO_enable) {
-        global_data_A36417_000.EMCO_control_setpoint = (unsigned int)(UpdatePID(&emco_pid,(EMCO_SETPOINT-(double)ion_pump_voltage), (double) ion_pump_voltage));
+    if (global_data_A37497.EMCO_enable) {
+      global_data_A37497.EMCO_control_setpoint = (unsigned int)(UpdatePID(&emco_pid,(EMCO_SETPOINT-(double)ion_pump_voltage), (double) ion_pump_voltage));
     } else {
-        global_data_A36417_000.EMCO_control_setpoint = 0;
+      global_data_A37497.EMCO_control_setpoint = 0;
     }
 
-    ETMCanSlaveSetDebugRegister(8, global_data_A36417_000.EMCO_control_setpoint);
+    ETMCanSlaveSetDebugRegister(8, global_data_A37497.EMCO_control_setpoint);
    
     // Increasing EMCO setpoint protection
-    if(global_data_A36417_000.EMCO_control_setpoint > DAC_SETPOINT_CAP){
-        global_data_A36417_000.EMCO_control_setpoint = DAC_SETPOINT_CAP;
+    if(global_data_A37497.EMCO_control_setpoint > DAC_SETPOINT_CAP){
+      global_data_A37497.EMCO_control_setpoint = DAC_SETPOINT_CAP;
     }
         
-    WriteMCP4822(&U11_MCP4822, MCP4822_OUTPUT_A_4096, global_data_A36417_000.EMCO_control_setpoint);
+    WriteMCP4822(&U11_MCP4822, MCP4822_OUTPUT_A_4096, global_data_A37497.EMCO_control_setpoint);
 
-    ETMCanSlaveSetDebugRegister(7, global_data_A36417_000.EMCO_control_setpoint);
+    ETMCanSlaveSetDebugRegister(7, global_data_A37497.EMCO_control_setpoint);
 
-    ETMCanSlaveSetDebugRegister(1, global_data_A36417_000.analog_input_5V_monitor.reading_scaled_and_calibrated);
-    ETMCanSlaveSetDebugRegister(2, global_data_A36417_000.analog_input_15V_monitor.reading_scaled_and_calibrated);
-    ETMCanSlaveSetDebugRegister(3, global_data_A36417_000.analog_input_minus_5V_monitor.reading_scaled_and_calibrated);
+    ETMCanSlaveSetDebugRegister(1, global_data_A37497.analog_input_5V_monitor.reading_scaled_and_calibrated);
+    ETMCanSlaveSetDebugRegister(2, global_data_A37497.analog_input_15V_monitor.reading_scaled_and_calibrated);
+    ETMCanSlaveSetDebugRegister(3, global_data_A37497.analog_input_minus_5V_monitor.reading_scaled_and_calibrated);
     ETMCanSlaveSetDebugRegister(0xE, _STATUS_ION_PUMP_HAS_OVER_CURRENT);
-    ETMCanSlaveSetDebugRegister(0xF, global_data_A36417_000.control_state);
+    ETMCanSlaveSetDebugRegister(0xF, global_data_A37497.control_state);
     
-    global_data_A36417_000.self_test_count++;
+    global_data_A37497.self_test_count++;
 
 
-// -------------------- CHECK FOR FAULTS ------------------- //
+    // -------------------- CHECK FOR FAULTS ------------------- //
 
     if (ETMCanSlaveGetSyncMsgResetEnable()) {
-      global_data_A36417_000.reset_active = 1;
+      global_data_A37497.reset_active = 1;
     } else {
-      global_data_A36417_000.reset_active = 0;
+      global_data_A37497.reset_active = 0;
     }
 
-    if (ETMAnalogCheckUnderAbsolute(&global_data_A36417_000.analog_input_ion_pump_voltage)) {
-        _FAULT_ION_PUMP_UNDER_VOLTAGE = 1;
-    } else if (global_data_A36417_000.reset_active) {
-        _FAULT_ION_PUMP_UNDER_VOLTAGE = 0;
+    if (ETMAnalogCheckUnderAbsolute(&global_data_A37497.analog_input_ion_pump_voltage)) {
+      _FAULT_ION_PUMP_UNDER_VOLTAGE = 1;
+    } else if (global_data_A37497.reset_active) {
+      _FAULT_ION_PUMP_UNDER_VOLTAGE = 0;
     }
 
-    if (global_data_A36417_000.analog_input_ion_pump_current.reading_scaled_and_calibrated <= CURRENT_LOWER_THRESHOLD) {
-      global_data_A36417_000.current_below_limit = 1;
+    if (global_data_A37497.analog_input_ion_pump_current.reading_scaled_and_calibrated <= CURRENT_LOWER_THRESHOLD) {
+      global_data_A37497.current_below_limit = 1;
     }
 
-    if (ETMAnalogCheckOverAbsolute(&global_data_A36417_000.analog_input_ion_pump_current)) {
-        _FAULT_ION_PUMP_OVER_CURRENT = 1;
-    } else if (global_data_A36417_000.reset_active && global_data_A36417_000.current_below_limit) {
-        _FAULT_ION_PUMP_OVER_CURRENT = 0;
+    if (ETMAnalogCheckOverAbsolute(&global_data_A37497.analog_input_ion_pump_current)) {
+      _FAULT_ION_PUMP_OVER_CURRENT = 1;
+    } else if (global_data_A37497.reset_active && global_data_A37497.current_below_limit) {
+      _FAULT_ION_PUMP_OVER_CURRENT = 0;
     }
   }  
   return;
@@ -211,17 +209,17 @@ void DoA36417_000(void){
 }
 
 unsigned int Check_Faults(void) {
-    unsigned int fault;
-    fault = _FAULT_CAN_COMMUNICATION || _FAULT_ION_PUMP_UNDER_VOLTAGE;
+  unsigned int fault;
+  fault = _FAULT_CAN_COMMUNICATION || _FAULT_ION_PUMP_UNDER_VOLTAGE;
 
-    return fault;
+  return fault;
 }
 
 
 void Reset_Faults(void) {
-    _FAULT_ION_PUMP_OVER_CURRENT = 0;
-    _FAULT_ION_PUMP_UNDER_VOLTAGE = 0;
-    _FAULT_CAN_COMMUNICATION = 0;
+  _FAULT_ION_PUMP_OVER_CURRENT = 0;
+  _FAULT_ION_PUMP_UNDER_VOLTAGE = 0;
+  _FAULT_CAN_COMMUNICATION = 0;
 
 }
 
@@ -255,7 +253,7 @@ double UpdatePID(SPid* pid, double error, double reading) {
 }
 
 
-void InitializeA36417(void) {
+void InitializeA37497(void) {
 
   unsigned int startup_counter;
 
@@ -278,12 +276,12 @@ void InitializeA36417(void) {
   _ADIP = 6; // This needs to be higher priority than the CAN interrupt (Which defaults to 4)
 
   // Initialize all I/O Registers
-  TRISA = A36417_TRISA_VALUE;
-  TRISB = A36417_TRISB_VALUE;
-  TRISC = A36417_TRISC_VALUE;
-  TRISD = A36417_TRISD_VALUE;
-  TRISF = A36417_TRISF_VALUE;
-  TRISG = A36417_TRISG_VALUE;
+  TRISA = A37497_TRISA_VALUE;
+  TRISB = A37497_TRISB_VALUE;
+  TRISC = A37497_TRISC_VALUE;
+  TRISD = A37497_TRISD_VALUE;
+  TRISF = A37497_TRISF_VALUE;
+  TRISG = A37497_TRISG_VALUE;
   
   // Initialize the DAC
   U11_MCP4822.pin_chip_select_not = _PIN_RF2;
@@ -331,18 +329,18 @@ void InitializeA36417(void) {
   emco_pid.iMax=PID_IMAX;
   emco_pid.iMin=PID_IMIN;
 
-  global_data_A36417_000.EMCO_control_setpoint=0;
-  WriteMCP4822(&U11_MCP4822, MCP4822_OUTPUT_A_4096, global_data_A36417_000.EMCO_control_setpoint);
+  global_data_A37497.EMCO_control_setpoint=0;
+  WriteMCP4822(&U11_MCP4822, MCP4822_OUTPUT_A_4096, global_data_A37497.EMCO_control_setpoint);
 
 
   // Initialize the CAN module
   ETMCanSlaveInitialize(CAN_PORT_1, FCY_CLK, ETM_CAN_ADDR_ION_PUMP_BOARD, _PIN_RG13, 4, _PIN_RA7, _PIN_RG12);
-  ETMCanSlaveLoadConfiguration(36417, 252, FIRMWARE_AGILE_REV, FIRMWARE_BRANCH, FIRMWARE_MINOR_REV);
+  ETMCanSlaveLoadConfiguration(37497, 252, FIRMWARE_AGILE_REV, FIRMWARE_BRANCH, FIRMWARE_MINOR_REV);
 
 
   //Initialize analog input/output scaling
 
-  ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_ion_pump_voltage,
+  ETMAnalogInitializeInput(&global_data_A37497.analog_input_ion_pump_voltage,
                            MACRO_DEC_TO_SCALE_FACTOR_16(ION_PUMP_VOLTAGE_SCALE_FACTOR),
                            OFFSET_ZERO,
                            ANALOG_INPUT_0,
@@ -353,7 +351,7 @@ void InitializeA36417(void) {
                            NO_RELATIVE_COUNTER,
                            ION_PUMP_VOLTAGE_ABSOLUTE_TRIP_TIME);
 
-  ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_ion_pump_current,
+  ETMAnalogInitializeInput(&global_data_A37497.analog_input_ion_pump_current,
                            MACRO_DEC_TO_SCALE_FACTOR_16(ION_PUMP_CURRENT_SCALE_FACTOR),
                            OFFSET_ZERO,
                            ANALOG_INPUT_1,
@@ -365,7 +363,7 @@ void InitializeA36417(void) {
                            ION_PUMP_CURRENT_ABSOLUTE_TRIP_TIME);
 
 #ifdef TARGET_CURRENT
-  ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_target_current,
+  ETMAnalogInitializeInput(&global_data_A37497.analog_input_target_current,
                            MACRO_DEC_TO_SCALE_FACTOR_16(TARGET_CURRENT_SCALE_FACTOR),
                            OFFSET_ZERO,
                            ANALOG_INPUT_2,
@@ -377,7 +375,7 @@ void InitializeA36417(void) {
                            TARGET_CURRENT_ABSOLUTE_TRIP_TIME);
 #endif
 
-  ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_5V_monitor,
+  ETMAnalogInitializeInput(&global_data_A37497.analog_input_5V_monitor,
                            MACRO_DEC_TO_SCALE_FACTOR_16(_5V_MONITOR_SCALE_FACTOR),
                            OFFSET_ZERO,
                            ANALOG_INPUT_3,
@@ -388,7 +386,7 @@ void InitializeA36417(void) {
                            NO_COUNTER,
                            NO_COUNTER);
 
-  ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_15V_monitor,
+  ETMAnalogInitializeInput(&global_data_A37497.analog_input_15V_monitor,
                            MACRO_DEC_TO_SCALE_FACTOR_16(_15V_MONITOR_SCALE_FACTOR),
                            OFFSET_ZERO,
                            ANALOG_INPUT_4,
@@ -399,7 +397,7 @@ void InitializeA36417(void) {
                            NO_COUNTER,
                            NO_COUNTER);
 
-  ETMAnalogInitializeInput(&global_data_A36417_000.analog_input_minus_5V_monitor,
+  ETMAnalogInitializeInput(&global_data_A37497.analog_input_minus_5V_monitor,
                            MACRO_DEC_TO_SCALE_FACTOR_16(MINUS_5V_MONITOR_SCALE_FACTOR),
                            OFFSET_ZERO,
                            ANALOG_INPUT_5,
@@ -411,7 +409,7 @@ void InitializeA36417(void) {
                            NO_COUNTER);
 
 
-// Startup LEDs
+  // Startup LEDs
   startup_counter = 0;
   while (startup_counter <= 400) {  // 4 Seconds total
     ETMCanSlaveDoCan();
@@ -453,9 +451,9 @@ void InitializeA36417(void) {
 #ifdef TARGET_CURRENT
 void __attribute__((interrupt, no_auto_psv)) _INT3Interrupt(void){
   _INT3IF = 0;
-  global_data_A36417_000.trigger_recieved = 1;
-  global_data_A36417_000.pulse_id = ETMCanSlaveGetPulseCount();
-  global_data_A36417_000.sample_level = ETMCanSlaveGetPulseLevel();
+  global_data_A37497.trigger_recieved = 1;
+  global_data_A37497.pulse_id = ETMCanSlaveGetPulseCount();
+  global_data_A37497.sample_level = ETMCanSlaveGetPulseLevel();
 
   target_current_flag=1;
 }
@@ -465,77 +463,77 @@ void __attribute__((interrupt, no_auto_psv)) _ADCInterrupt(void) {
   _ADIF = 0;
 
   if (_BUFS) {
-      // read ADCBUF 0-7
-      global_data_A36417_000.analog_input_ion_pump_voltage.adc_accumulator          += ADCBUF0;
-      global_data_A36417_000.analog_input_ion_pump_current.adc_accumulator          += ADCBUF1;
-      global_data_A36417_000.analog_input_5V_monitor.adc_accumulator                += ADCBUF2;
-      global_data_A36417_000.analog_input_15V_monitor.adc_accumulator               += ADCBUF3;
-      global_data_A36417_000.analog_input_minus_5V_monitor.adc_accumulator          += ADCBUF4;
+    // read ADCBUF 0-7
+    global_data_A37497.analog_input_ion_pump_voltage.adc_accumulator          += ADCBUF0;
+    global_data_A37497.analog_input_ion_pump_current.adc_accumulator          += ADCBUF1;
+    global_data_A37497.analog_input_5V_monitor.adc_accumulator                += ADCBUF2;
+    global_data_A37497.analog_input_15V_monitor.adc_accumulator               += ADCBUF3;
+    global_data_A37497.analog_input_minus_5V_monitor.adc_accumulator          += ADCBUF4;
 
 #ifdef TARGET_CURRENT
-      if(target_current_flag){
-        global_data_A36417_000.analog_input_target_current.filtered_adc_reading       = ADCBUF5;
-      }      
-      global_data_A36417_000.analog_input_target_current.adc_accumulator            += ADCBUF5;
-      if(ADCDEBUG5<ADCBUF5){
-        ADCDEBUG5=ADCBUF5;
-      }
+    if(target_current_flag){
+      global_data_A37497.analog_input_target_current.filtered_adc_reading       = ADCBUF5;
+    }      
+    global_data_A37497.analog_input_target_current.adc_accumulator            += ADCBUF5;
+    if(ADCDEBUG5<ADCBUF5){
+      ADCDEBUG5=ADCBUF5;
+    }
 #endif
       
-    } else {
-      // read ADCBUF 8-15
-      global_data_A36417_000.analog_input_ion_pump_voltage.adc_accumulator          += ADCBUF8;
-      global_data_A36417_000.analog_input_ion_pump_current.adc_accumulator          += ADCBUF9;
-      global_data_A36417_000.analog_input_5V_monitor.adc_accumulator                += ADCBUFA;
-      global_data_A36417_000.analog_input_15V_monitor.adc_accumulator               += ADCBUFB;
-      global_data_A36417_000.analog_input_minus_5V_monitor.adc_accumulator          += ADCBUFC;
+  } else {
+    // read ADCBUF 8-15
+    global_data_A37497.analog_input_ion_pump_voltage.adc_accumulator          += ADCBUF8;
+    global_data_A37497.analog_input_ion_pump_current.adc_accumulator          += ADCBUF9;
+    global_data_A37497.analog_input_5V_monitor.adc_accumulator                += ADCBUFA;
+    global_data_A37497.analog_input_15V_monitor.adc_accumulator               += ADCBUFB;
+    global_data_A37497.analog_input_minus_5V_monitor.adc_accumulator          += ADCBUFC;
 
 #ifdef TARGET_CURRENT
-      if(target_current_flag){
-        global_data_A36417_000.analog_input_target_current.filtered_adc_reading     = ADCBUFD;
-      }
-      global_data_A36417_000.analog_input_target_current.adc_accumulator            += ADCBUFD;
-      if(ADCDEBUG5<ADCBUF5){
-        ADCDEBUG5=ADCBUFD;
-      }
-#endif
+    if(target_current_flag){
+      global_data_A37497.analog_input_target_current.filtered_adc_reading     = ADCBUFD;
     }
-
-  global_data_A36417_000.accumulator_counter += 1;
-
-  if (global_data_A36417_000.accumulator_counter >= 64) {
-
-      global_data_A36417_000.analog_input_ion_pump_current.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
-      global_data_A36417_000.analog_input_ion_pump_current.filtered_adc_reading = global_data_A36417_000.analog_input_ion_pump_current.adc_accumulator;
-      global_data_A36417_000.analog_input_ion_pump_current.adc_accumulator = 0;
-
-      global_data_A36417_000.analog_input_ion_pump_voltage.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
-      global_data_A36417_000.analog_input_ion_pump_voltage.filtered_adc_reading = global_data_A36417_000.analog_input_ion_pump_voltage.adc_accumulator;
-      global_data_A36417_000.analog_input_ion_pump_voltage.adc_accumulator = 0;
-
-      global_data_A36417_000.analog_input_5V_monitor.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
-      global_data_A36417_000.analog_input_5V_monitor.filtered_adc_reading = global_data_A36417_000.analog_input_5V_monitor.adc_accumulator;
-      global_data_A36417_000.analog_input_5V_monitor.adc_accumulator = 0;
-
-      global_data_A36417_000.analog_input_15V_monitor.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
-      global_data_A36417_000.analog_input_15V_monitor.filtered_adc_reading = global_data_A36417_000.analog_input_15V_monitor.adc_accumulator;
-      global_data_A36417_000.analog_input_15V_monitor.adc_accumulator = 0;
-
-      global_data_A36417_000.analog_input_minus_5V_monitor.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
-      global_data_A36417_000.analog_input_minus_5V_monitor.filtered_adc_reading = global_data_A36417_000.analog_input_minus_5V_monitor.adc_accumulator;
-      global_data_A36417_000.analog_input_minus_5V_monitor.adc_accumulator = 0;
-
-#ifdef TARGET_CURRENT
-      global_data_A36417_000.analog_input_target_current.adc_accumulator >>= 2;
-      global_data_A36417_000.analog_input_target_current.adc_accumulator = 0;
+    global_data_A37497.analog_input_target_current.adc_accumulator            += ADCBUFD;
+    if(ADCDEBUG5<ADCBUF5){
+      ADCDEBUG5=ADCBUFD;
+    }
 #endif
-
-      global_data_A36417_000.accumulator_counter = 0;
   }
 
-    ETMCanSlaveSetDebugRegister(4, global_data_A36417_000.analog_input_ion_pump_voltage.reading_scaled_and_calibrated);
-    ETMCanSlaveSetDebugRegister(5, global_data_A36417_000.analog_input_ion_pump_current.reading_scaled_and_calibrated);
-    ETMCanSlaveSetDebugRegister(6, global_data_A36417_000.analog_input_target_current.filtered_adc_reading);
+  global_data_A37497.accumulator_counter += 1;
+
+  if (global_data_A37497.accumulator_counter >= 64) {
+
+    global_data_A37497.analog_input_ion_pump_current.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
+    global_data_A37497.analog_input_ion_pump_current.filtered_adc_reading = global_data_A37497.analog_input_ion_pump_current.adc_accumulator;
+    global_data_A37497.analog_input_ion_pump_current.adc_accumulator = 0;
+
+    global_data_A37497.analog_input_ion_pump_voltage.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
+    global_data_A37497.analog_input_ion_pump_voltage.filtered_adc_reading = global_data_A37497.analog_input_ion_pump_voltage.adc_accumulator;
+    global_data_A37497.analog_input_ion_pump_voltage.adc_accumulator = 0;
+
+    global_data_A37497.analog_input_5V_monitor.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
+    global_data_A37497.analog_input_5V_monitor.filtered_adc_reading = global_data_A37497.analog_input_5V_monitor.adc_accumulator;
+    global_data_A37497.analog_input_5V_monitor.adc_accumulator = 0;
+
+    global_data_A37497.analog_input_15V_monitor.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
+    global_data_A37497.analog_input_15V_monitor.filtered_adc_reading = global_data_A37497.analog_input_15V_monitor.adc_accumulator;
+    global_data_A37497.analog_input_15V_monitor.adc_accumulator = 0;
+
+    global_data_A37497.analog_input_minus_5V_monitor.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
+    global_data_A37497.analog_input_minus_5V_monitor.filtered_adc_reading = global_data_A37497.analog_input_minus_5V_monitor.adc_accumulator;
+    global_data_A37497.analog_input_minus_5V_monitor.adc_accumulator = 0;
+
+#ifdef TARGET_CURRENT
+    global_data_A37497.analog_input_target_current.adc_accumulator >>= 2;
+    global_data_A37497.analog_input_target_current.adc_accumulator = 0;
+#endif
+
+    global_data_A37497.accumulator_counter = 0;
+  }
+
+  ETMCanSlaveSetDebugRegister(4, global_data_A37497.analog_input_ion_pump_voltage.reading_scaled_and_calibrated);
+  ETMCanSlaveSetDebugRegister(5, global_data_A37497.analog_input_ion_pump_current.reading_scaled_and_calibrated);
+  ETMCanSlaveSetDebugRegister(6, global_data_A37497.analog_input_target_current.filtered_adc_reading);
  
 }
 
