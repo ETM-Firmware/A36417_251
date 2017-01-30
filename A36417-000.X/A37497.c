@@ -17,11 +17,6 @@ void Reset_Faults(void);
 unsigned int Check_Faults(void);
 //unsigned int Check_Supplies(void);
 
-#ifdef TARGET_CURRENT
-volatile unsigned int target_current_flag;
-unsigned int ADCDEBUG5;
-#endif
-
 
 MCP4822 U11_MCP4822;
 
@@ -109,27 +104,6 @@ void DoStateMachine(void){
 void DoA37497(void){
 
   ETMCanSlaveDoCan();
-
-#ifdef TARGET_CURRENT
-  //  if (global_data_A37497.trigger_recieved) {    
-  //    if (global_data_A37497.sample_level) {
-  //      //ETMCanSlaveIonPumpSendTargetCurrentReading(0x2002, 0x0000, global_data_A37497.pulse_id);
-  //    } else {
-  //      //ETMCanSlaveIonPumpSendTargetCurrentReading(0x0000, 0x1001, global_data_A37497.pulse_id);
-  //    }
-  //    global_data_A37497.trigger_recieved = 0;
-  //  }
-  
-  //If a target pulse was received
-  ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_target_current);
-
-  if (high energy pulse) {
-    global_data_A37497.target_current_high = global_data_A37497.analog_input_target_current.reading_scaled_and_calibrated;
-  }
-  else if (low energy pulse) {
-    global_data_A37497.target_current_low = global_data_A37497.analog_input_target_current.reading_scaled_and_calibrated;
-  }
-#endif
 
 
   if (ETMCanSlaveGetComFaultStatus()) {
@@ -263,15 +237,6 @@ void InitializeA37497(void) {
   _WARNING_REGISTER = 0;
   _NOT_LOGGED_REGISTER = 0;
 
-#ifdef TARGET_CURRENT
-  // Configure Sample Target Current Interrupt
-  _INT3IP = 7; // This must be the highest priority interrupt
-  _INT3EP = 0; // Positive Transition COSORIO check this
-  _INT3IF = 0; //Clear the interrupt flag.
-  _INT3IE = 1;
-  target_current_flag = 0;
-#endif
-
   // Configure ADC Interrupt
   _ADIP = 6; // This needs to be higher priority than the CAN interrupt (Which defaults to 4)
 
@@ -362,19 +327,6 @@ void InitializeA37497(void) {
                            NO_RELATIVE_COUNTER,
                            ION_PUMP_CURRENT_ABSOLUTE_TRIP_TIME);
 
-#ifdef TARGET_CURRENT
-  ETMAnalogInitializeInput(&global_data_A37497.analog_input_target_current,
-                           MACRO_DEC_TO_SCALE_FACTOR_16(TARGET_CURRENT_SCALE_FACTOR),
-                           OFFSET_ZERO,
-                           ANALOG_INPUT_2,
-                           TARGET_CURRENT_OVER_TRIP_POINT,
-            	           TARGET_CURRENT_UNDER_TRIP_POINT,
-                           NO_TRIP_SCALE,
-                           NO_FLOOR,
-                           NO_RELATIVE_COUNTER,
-                           TARGET_CURRENT_ABSOLUTE_TRIP_TIME);
-#endif
-
   ETMAnalogInitializeInput(&global_data_A37497.analog_input_5V_monitor,
                            MACRO_DEC_TO_SCALE_FACTOR_16(_5V_MONITOR_SCALE_FACTOR),
                            OFFSET_ZERO,
@@ -448,17 +400,6 @@ void InitializeA37497(void) {
   PIN_LED_OPERATIONAL_GREEN = OLL_LED_ON;
 }
 
-#ifdef TARGET_CURRENT
-void __attribute__((interrupt, no_auto_psv)) _INT3Interrupt(void){
-  _INT3IF = 0;
-  global_data_A37497.trigger_recieved = 1;
-  global_data_A37497.pulse_id = ETMCanSlaveGetPulseCount();
-  global_data_A37497.sample_level = ETMCanSlaveGetPulseLevel();
-
-  target_current_flag=1;
-}
-#endif
-
 void __attribute__((interrupt, no_auto_psv)) _ADCInterrupt(void) {
   _ADIF = 0;
 
@@ -470,16 +411,6 @@ void __attribute__((interrupt, no_auto_psv)) _ADCInterrupt(void) {
     global_data_A37497.analog_input_15V_monitor.adc_accumulator               += ADCBUF3;
     global_data_A37497.analog_input_minus_5V_monitor.adc_accumulator          += ADCBUF4;
 
-#ifdef TARGET_CURRENT
-    if(target_current_flag){
-      global_data_A37497.analog_input_target_current.filtered_adc_reading       = ADCBUF5;
-    }      
-    global_data_A37497.analog_input_target_current.adc_accumulator            += ADCBUF5;
-    if(ADCDEBUG5<ADCBUF5){
-      ADCDEBUG5=ADCBUF5;
-    }
-#endif
-      
   } else {
     // read ADCBUF 8-15
     global_data_A37497.analog_input_ion_pump_voltage.adc_accumulator          += ADCBUF8;
@@ -488,15 +419,6 @@ void __attribute__((interrupt, no_auto_psv)) _ADCInterrupt(void) {
     global_data_A37497.analog_input_15V_monitor.adc_accumulator               += ADCBUFB;
     global_data_A37497.analog_input_minus_5V_monitor.adc_accumulator          += ADCBUFC;
 
-#ifdef TARGET_CURRENT
-    if(target_current_flag){
-      global_data_A37497.analog_input_target_current.filtered_adc_reading     = ADCBUFD;
-    }
-    global_data_A37497.analog_input_target_current.adc_accumulator            += ADCBUFD;
-    if(ADCDEBUG5<ADCBUF5){
-      ADCDEBUG5=ADCBUFD;
-    }
-#endif
   }
 
   global_data_A37497.accumulator_counter += 1;
@@ -522,11 +444,6 @@ void __attribute__((interrupt, no_auto_psv)) _ADCInterrupt(void) {
     global_data_A37497.analog_input_minus_5V_monitor.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 128 samples
     global_data_A37497.analog_input_minus_5V_monitor.filtered_adc_reading = global_data_A37497.analog_input_minus_5V_monitor.adc_accumulator;
     global_data_A37497.analog_input_minus_5V_monitor.adc_accumulator = 0;
-
-#ifdef TARGET_CURRENT
-    global_data_A37497.analog_input_target_current.adc_accumulator >>= 2;
-    global_data_A37497.analog_input_target_current.adc_accumulator = 0;
-#endif
 
     global_data_A37497.accumulator_counter = 0;
   }

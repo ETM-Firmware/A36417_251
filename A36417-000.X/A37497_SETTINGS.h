@@ -21,11 +21,6 @@
 
 #define CURRENT_LOWER_THRESHOLD                  2000              // 20 uA - this is 10nA units
 
-#define TARGET_CURRENT_SCALE_FACTOR              0.0763/5           //placeholder
-#define TARGET_CURRENT_OVER_TRIP_POINT           555                //placeholder
-#define TARGET_CURRENT_UNDER_TRIP_POINT          10                 //placeholder
-#define TARGET_CURRENT_ABSOLUTE_TRIP_TIME        50                 // This is in 10ms Units
-
 #define _5V_MONITOR_SCALE_FACTOR                 0.0763
 #define _5V_MONITOR_OVER_TRIP_POINT              2600
 #define _5V_MONITOR_UNDER_TRIP_POINT             2400
