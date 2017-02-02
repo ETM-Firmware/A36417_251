@@ -8,6 +8,9 @@
 void FlashLeds(void);
 unsigned int CheckFaultIonPumpOn(void);
 unsigned int CheckFaultIonPumpOff(void);
+unsigned int ETMMath16Add(unsigned int value_1, unsigned int value_2);
+unsigned int ETMMath16Sub(unsigned int value_1, unsigned int value_2);
+
 
 
 
@@ -165,6 +168,13 @@ void DoA37497(void){
       global_data_A37497.EMCO_control_setpoint = 0;
     }
 
+    /*
+      DPARKER - Test this
+      NEW EMCO regulation LOOP
+      global_data_A37497.EMCO_control_setpoint = UpdateHVControl(global_data_A37497.analog_input_ion_pump_voltage.reading_scaled_and_calibrated, global_data_A37497.EMCO_control_setpoint)
+    */
+
+
     WriteMCP4822(&U11_MCP4822, MCP4822_OUTPUT_A_4096, global_data_A37497.EMCO_control_setpoint);
 
 
@@ -261,6 +271,63 @@ unsigned int CheckFaultIonPumpOff(void) {
   }
   return 0;
 }
+
+
+unsigned int ETMMath16Add(unsigned int value_1, unsigned int value_2) {
+  if ((0xFFFF - value_1) <= value_2) {
+    return 0xFFFF;
+  } else {
+    return (value_1 + value_2);
+  }
+}
+
+unsigned int ETMMath16Sub(unsigned int value_1, unsigned int value_2) {
+  if (value_2 > value_1) {
+    return 0;
+  } else {
+    return (value_1 - value_2);
+  }
+}
+
+#define DAC_ADJUSTMENT_LARGE   100
+#define DAC_ADJUSTMENT_MEDIUM  10
+#define DAC_ADJUSTMENT_SMALL   1
+#define MAX_DAC_SETPOINT       0x0FFF
+
+unsigned int UpdateHVControl(unsigned int current_reading, unsigned int current_dac_setting) {
+  unsigned int voltage_error;
+  unsigned int new_dac_setting;
+
+  if (current_reading > EMCO_SETPOINT) {
+    voltage_error = ETMMath16Sub(current_reading,EMCO_SETPOINT);
+    if (voltage_error > 500) {
+      new_dac_setting = 0;
+    } else if (voltage_error > 100) {
+      new_dac_setting = ETMMath16Sub(current_dac_setting, DAC_ADJUSTMENT_LARGE);
+    } else if (voltage_error > 20) {
+      new_dac_setting = ETMMath16Sub(current_dac_setting, DAC_ADJUSTMENT_MEDIUM);
+    } else {
+      new_dac_setting = ETMMath16Sub(current_dac_setting, DAC_ADJUSTMENT_SMALL);
+    }
+  } else {
+    voltage_error = ETMMath16Sub(EMCO_SETPOINT, current_reading);
+    if (voltage_error > 500) {
+      new_dac_setting = ETMMath16Add(current_dac_setting, DAC_ADJUSTMENT_LARGE);
+    } else if (voltage_error > 100) {
+      new_dac_setting = ETMMath16Add(current_dac_setting, DAC_ADJUSTMENT_MEDIUM);
+    } else if (voltage_error > 10) {
+      new_dac_setting = ETMMath16Add(current_dac_setting, DAC_ADJUSTMENT_SMALL);
+    } else {
+      // the voltage is close enough, do not adjust the DAC setting
+      new_dac_setting = current_dac_setting;
+    }
+    if (new_dac_setting > MAX_DAC_SETPOINT) {
+      new_dac_setting = MAX_DAC_SETPOINT;
+    }
+  }
+  return new_dac_setting;
+}
+
 
 double UpdatePID(SPid* pid, double error, double reading) {
   double pTerm, dTerm, iTerm;
