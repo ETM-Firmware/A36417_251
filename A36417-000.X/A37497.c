@@ -1,6 +1,7 @@
 #include "A37497.h"
 #include "A37497_SETTINGS.h"
 #include "FIRMWARE_VERSION.h"
+#include "ETM_MATH.h"
 
 // DPARKER - switch to library rev 3
 
@@ -8,11 +9,6 @@
 void FlashLeds(void);
 unsigned int CheckFaultIonPumpOn(void);
 unsigned int CheckFaultIonPumpOff(void);
-unsigned int ETMMath16Add(unsigned int value_1, unsigned int value_2);
-unsigned int ETMMath16Sub(unsigned int value_1, unsigned int value_2);
-
-
-
 
 
 
@@ -272,22 +268,6 @@ unsigned int CheckFaultIonPumpOff(void) {
   return 0;
 }
 
-
-unsigned int ETMMath16Add(unsigned int value_1, unsigned int value_2) {
-  if ((0xFFFF - value_1) <= value_2) {
-    return 0xFFFF;
-  } else {
-    return (value_1 + value_2);
-  }
-}
-
-unsigned int ETMMath16Sub(unsigned int value_1, unsigned int value_2) {
-  if (value_2 > value_1) {
-    return 0;
-  } else {
-    return (value_1 - value_2);
-  }
-}
 
 #define DAC_ADJUSTMENT_LARGE   100
 #define DAC_ADJUSTMENT_MEDIUM  10
