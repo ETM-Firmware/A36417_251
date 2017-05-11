@@ -146,19 +146,6 @@ typedef struct{
 } IonPumpControlData;
 
 
-typedef struct{
-  double dState;
-  double iState;
-  double iMax, iMin;
-
-  double iGain;
-  double pGain;
-  double dGain;
-
-}SPid;
-
-
-double UpdatePID(SPid* pid, double error, double reading);
 extern IonPumpControlData global_data_A37497;
 
 
@@ -211,15 +198,7 @@ extern IonPumpControlData global_data_A37497;
 
 #define SELF_TEST_TIME                      100    // 1sec
 
-#define EMCO_SETPOINT                       4000   // 3V --> 3kV
-#define DAC_SETPOINT_CAP                    0xFFF   // 2.5V
-
-#define PID_DGAIN                           .06
-#define PID_IGAIN                           .05
-#define PID_PGAIN                           .05
-#define PID_IMAX                            100000
-#define PID_IMIN                            0
-
+#define EMCO_SETPOINT                       4000  
 
 
 

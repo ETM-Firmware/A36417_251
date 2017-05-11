@@ -12,6 +12,8 @@ unsigned int CheckFaultIonPumpOff(void);
 
 
 
+unsigned int UpdateHVControl(unsigned int current_reading, unsigned int current_dac_setting);
+
 
 _FOSC(ECIO & CSW_FSCM_OFF);
 _FWDT(WDT_ON & WDTPSA_512 & WDTPSB_8);  // 8 Second watchdog timer
@@ -29,7 +31,6 @@ void DoA37497(void);
 
 MCP4822 U11_MCP4822;
 
-SPid emco_pid;
 IonPumpControlData global_data_A37497;
 
 int main (void){
@@ -153,23 +154,10 @@ void DoA37497(void){
       slave_board_data.log_data[3] = global_data_A37497.analog_input_ion_pump_current_high_resolution.reading_scaled_and_calibrated;
     }
     
-    // Run the PID on the Ion Pump Voltage
-    ion_pump_voltage = global_data_A37497.analog_input_ion_pump_voltage.reading_scaled_and_calibrated;
-    global_data_A37497.EMCO_control_setpoint = (unsigned int)(UpdatePID(&emco_pid,(EMCO_SETPOINT-(double)ion_pump_voltage), (double) ion_pump_voltage));
-
-    if(global_data_A37497.EMCO_control_setpoint > DAC_SETPOINT_CAP){
-      global_data_A37497.EMCO_control_setpoint = DAC_SETPOINT_CAP;
-    }
-    if (global_data_A37497.control_state == STATE_FAULT_ION_PUMP_OFF) {
-      global_data_A37497.EMCO_control_setpoint = 0;
-    }
-
-    /*
-      DPARKER - Test this
-      NEW EMCO regulation LOOP
-      global_data_A37497.EMCO_control_setpoint = UpdateHVControl(global_data_A37497.analog_input_ion_pump_voltage.reading_scaled_and_calibrated, global_data_A37497.EMCO_control_setpoint)
-    */
-
+    //DPARKER - Test this
+    //NEW EMCO regulation LOOP
+    global_data_A37497.EMCO_control_setpoint = UpdateHVControl(global_data_A37497.analog_input_ion_pump_voltage.reading_scaled_and_calibrated, global_data_A37497.EMCO_control_setpoint);
+    
 
     WriteMCP4822(&U11_MCP4822, MCP4822_OUTPUT_A_4096, global_data_A37497.EMCO_control_setpoint);
 
@@ -269,8 +257,8 @@ unsigned int CheckFaultIonPumpOff(void) {
 }
 
 
-#define DAC_ADJUSTMENT_LARGE   100
-#define DAC_ADJUSTMENT_MEDIUM  10
+#define DAC_ADJUSTMENT_LARGE   6
+#define DAC_ADJUSTMENT_MEDIUM  3
 #define DAC_ADJUSTMENT_SMALL   1
 #define MAX_DAC_SETPOINT       0x0FFF
 
@@ -281,13 +269,14 @@ unsigned int UpdateHVControl(unsigned int current_reading, unsigned int current_
   if (current_reading > EMCO_SETPOINT) {
     voltage_error = ETMMath16Sub(current_reading,EMCO_SETPOINT);
     if (voltage_error > 500) {
-      new_dac_setting = 0;
-    } else if (voltage_error > 100) {
       new_dac_setting = ETMMath16Sub(current_dac_setting, DAC_ADJUSTMENT_LARGE);
-    } else if (voltage_error > 20) {
+    } else if (voltage_error > 100) {
       new_dac_setting = ETMMath16Sub(current_dac_setting, DAC_ADJUSTMENT_MEDIUM);
-    } else {
+    } else if (voltage_error > 5) {
       new_dac_setting = ETMMath16Sub(current_dac_setting, DAC_ADJUSTMENT_SMALL);
+    } else {
+      // the voltage is close enough, do not adjust the DAC setting
+      new_dac_setting = current_dac_setting;
     }
   } else {
     voltage_error = ETMMath16Sub(EMCO_SETPOINT, current_reading);
@@ -295,7 +284,7 @@ unsigned int UpdateHVControl(unsigned int current_reading, unsigned int current_
       new_dac_setting = ETMMath16Add(current_dac_setting, DAC_ADJUSTMENT_LARGE);
     } else if (voltage_error > 100) {
       new_dac_setting = ETMMath16Add(current_dac_setting, DAC_ADJUSTMENT_MEDIUM);
-    } else if (voltage_error > 10) {
+    } else if (voltage_error > 1) {
       new_dac_setting = ETMMath16Add(current_dac_setting, DAC_ADJUSTMENT_SMALL);
     } else {
       // the voltage is close enough, do not adjust the DAC setting
@@ -306,36 +295,6 @@ unsigned int UpdateHVControl(unsigned int current_reading, unsigned int current_
     }
   }
   return new_dac_setting;
-}
-
-
-double UpdatePID(SPid* pid, double error, double reading) {
-  double pTerm, dTerm, iTerm;
-  pTerm = pid->pGain * error;
-
-  pid->iState += error;
-  if (pid->iState > pid->iMax){
-    pid->iState = pid->iMax;
-  }
-
-  else if (pid->iState < pid->iMin){
-    pid->iState = pid->iMin;
-  }
-
-  iTerm = pid->iGain * pid->iState;  // calculate the integral term
-  dTerm = pid->dGain * (reading - pid->dState);
-  pid->dState = reading;
-
-  ETMCanSlaveSetDebugRegister(0xA, (unsigned int)error);
-  ETMCanSlaveSetDebugRegister(0xB, (unsigned int)pTerm);
-  ETMCanSlaveSetDebugRegister(0xC, (unsigned int)iTerm);
-  ETMCanSlaveSetDebugRegister(0xD, (unsigned int)dTerm);
-
-  if(pTerm + iTerm - dTerm < 0)
-    return 1;
-  else
-    return pTerm + iTerm - dTerm;
-
 }
 
 
@@ -421,14 +380,6 @@ void InitializeA37497(void) {
   _ADIE = 1;
   _ADON = 1;
 
-  //Initialize PID control loop variables
-  emco_pid.dGain=PID_DGAIN;
-  emco_pid.dState=0;
-  emco_pid.iState=0;
-  emco_pid.iGain=PID_IGAIN;
-  emco_pid.pGain=PID_PGAIN;
-  emco_pid.iMax=PID_IMAX;
-  emco_pid.iMin=PID_IMIN;
 
   global_data_A37497.EMCO_control_setpoint=0;
   WriteMCP4822(&U11_MCP4822, MCP4822_OUTPUT_A_4096, global_data_A37497.EMCO_control_setpoint);
@@ -436,7 +387,7 @@ void InitializeA37497(void) {
 
   // Initialize the CAN module
   ETMCanSlaveInitialize(CAN_PORT_1, FCY_CLK, ETM_CAN_ADDR_ION_PUMP_BOARD, _PIN_RG13, 4, _PIN_RA7, _PIN_RG12);
-  ETMCanSlaveLoadConfiguration(37497, 252, FIRMWARE_AGILE_REV, FIRMWARE_BRANCH, FIRMWARE_MINOR_REV);
+  ETMCanSlaveLoadConfiguration(37497, 0, FIRMWARE_AGILE_REV, FIRMWARE_BRANCH, FIRMWARE_MINOR_REV);
 
 
   //Initialize analog input/output scaling

@@ -21,17 +21,17 @@
 // DPARKER - Fix all the scale factors
 
 
-#define ION_PUMP_VOLTAGE_SCALE_FACTOR            .0763              // 1V per 1kV
+#define ION_PUMP_VOLTAGE_SCALE_FACTOR            .09537              // 1V per 1kV
 #define ION_PUMP_VOLTAGE_OVER_TRIP_POINT         4300               // 4.3kV
 #define ION_PUMP_VOLTAGE_UNDER_TRIP_POINT        2500               // 2.5kV
 #define ION_PUMP_VOLTAGE_ABSOLUTE_TRIP_TIME      5000               // 5 Seconds  This is in 10ms Units
 
-#define ION_PUMP_CURRENT_SCALE_FACTOR            .50863            
+#define ION_PUMP_CURRENT_SCALE_FACTOR            .47684            
 #define ION_PUMP_CURRENT_OVER_TRIP_POINT         4000               // 40uA this is in 10nA units
 #define ION_PUMP_CURRENT_UNDER_TRIP_POINT        2000               // 20uA this is in 10nA Units - The current must drop below this to clear overcurrent condition
 #define ION_PUMP_CURRENT_ABSOLUTE_TRIP_TIME      200                // 2 Seconds This is in 10ms Units
 
-#define ION_PUMP_CURRENT_HR_SCALE_FACTOR         .50863
+#define ION_PUMP_CURRENT_HR_SCALE_FACTOR         .01907
 #define ION_PUMP_CURRENT_HR_OVER_TRIP_POINT      100                // 1uA this is in 10nA units
 #define ION_PUMP_CURRENT_HR_UNDER_TRIP_POINT     100                // 1uA this is in 10nA Units - The current must drop below this to clear overcurrent condition
 #define ION_PUMP_CURRENT_HR_ABSOLUTE_TRIP_TIME   100                // 1 Seconds This is in 10ms Units
