@@ -8,7 +8,7 @@
 #ifndef A37497_SETTINGS_H
 #define	A37497_SETTINGS_H
 
-
+#define EMCO_SETPOINT                       4000  
 
 #define MAX_BATTERY_POWERED_STARTUP_TIME   12000  // 120 seconds
 #define MIN_BATTERY_POWERED_STARTUP_TIME    1000  // 10 seconds
@@ -16,15 +16,10 @@
 
 
 
-
-
-// DPARKER - Fix all the scale factors
-
-
-#define ION_PUMP_VOLTAGE_SCALE_FACTOR            .09537              // 1V per 1kV
+#define ION_PUMP_VOLTAGE_SCALE_FACTOR            .09537             // 1V per 1kV
 #define ION_PUMP_VOLTAGE_OVER_TRIP_POINT         4300               // 4.3kV
 #define ION_PUMP_VOLTAGE_UNDER_TRIP_POINT        2500               // 2.5kV
-#define ION_PUMP_VOLTAGE_ABSOLUTE_TRIP_TIME      5000               // 5 Seconds  This is in 10ms Units
+#define ION_PUMP_VOLTAGE_ABSOLUTE_TRIP_TIME      1000               // 10 Seconds  This is in 10ms Units
 
 #define ION_PUMP_CURRENT_SCALE_FACTOR            .47684            
 #define ION_PUMP_CURRENT_OVER_TRIP_POINT         4000               // 40uA this is in 10nA units
@@ -37,17 +32,18 @@
 #define ION_PUMP_CURRENT_HR_ABSOLUTE_TRIP_TIME   100                // 1 Seconds This is in 10ms Units
 
 
-#define _5V_MONITOR_SCALE_FACTOR                 0.0763
+#define _5V_MONITOR_SCALE_FACTOR                 0.15259
 #define _5V_MONITOR_OVER_TRIP_POINT              6000
 #define _5V_MONITOR_UNDER_TRIP_POINT             4000
 #define _5V_MONITOR_ABSOLUTE_TRIP_TIME           200
 
-#define _15V_MONITOR_SCALE_FACTOR                0.0763
+#define _15V_MONITOR_SCALE_FACTOR                0.32349
 #define _15V_MONITOR_OVER_TRIP_POINT             16500
 #define _15V_MONITOR_UNDER_TRIP_POINT            11000
 #define _15V_MONITOR_ABSOLUTE_TRIP_TIME          200
 
-#define MINUS_15V_MONITOR_SCALE_FACTOR           0.0763
+#define MINUS_15V_MONITOR_SCALE_FACTOR           0.07629
+#define MINUS_15V_MONITOR_OFFSET_FACTOR          0
 #define MINUS_15V_MONITOR_OVER_TRIP_POINT        16500
 #define MINUS_15V_MONITOR_UNDER_TRIP_POINT       11000
 #define MINUS_15V_MONITOR_ABSOLUTE_TRIP_TIME     200

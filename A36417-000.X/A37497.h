@@ -8,11 +8,10 @@
 #ifndef __A37497_H
 #define	__A37497_H
 
-#include <p30f6014a.h>
-#include <libpic30.h>
-#include <adc12.h>
 #include <xc.h>
+#include <adc12.h>
 #include <timer.h>
+#include <libpic30.h>
 #include "P1395_CAN_SLAVE.h"
 #include "ETM.h"
 
@@ -40,7 +39,6 @@
  PIN_G13, PIN_A7, PIN_G12 - Used/Configured by ETM CAN
  
 */
-
 
 
 
@@ -77,7 +75,7 @@
 #define PIN_D_OUT_DONE_DRV_B        _LATC15
 
 #define OLL_NOT_DONE                1
-
+#define OLL_15V_SUPPLY_ENABLE       0
 
 #define A37497_TRISA_VALUE 0b1100111100111111
 #define A37497_TRISB_VALUE 0b1111110111111111
@@ -133,6 +131,7 @@ typedef struct{
   AnalogInput analog_input_ion_pump_voltage;
   AnalogInput analog_input_5V_monitor;
   AnalogInput analog_input_15V_monitor;
+  AnalogInput analog_input_minus_15V_divider_point;
   AnalogInput analog_input_minus_15V_monitor;
 
   AnalogOutput analog_output_emco_control;
@@ -144,21 +143,6 @@ typedef struct{
   unsigned int power_up_count;
     
 } IonPumpControlData;
-
-
-extern IonPumpControlData global_data_A37497;
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -179,27 +163,13 @@ extern IonPumpControlData global_data_A37497;
 
 #define _FAULT_CAN_COMMUNICATION                 _FAULT_0
 #define _FAULT_ION_PUMP_OVER_CURRENT             _FAULT_1
-#define _FAULT_ION_PUMP_OVER_VOLTAGE             _FAULT_2 // DPARKER - THIS FAULT IS NOT USED
+//#define _FAULT_ION_PUMP_OVER_VOLTAGE             _FAULT_2 // - THIS FAULT IS NOT USED
 #define _FAULT_ION_PUMP_UNDER_VOLTAGE            _FAULT_3
 #define _FAULT_POWER_RAIL_FAILURE                _FAULT_4
 
 #define _STATUS_ION_PUMP_HAS_OVER_CURRENT        _WARNING_0  // This is used by the ECB
 #define _STATUS_KEEP_HEATER_OFF                  _WARNING_1  // This will be used by the ECB Someday
-#define _STATUS_ION_PUMP_CURRENT_VERY_LOW        _WARNING_2  // This 
-
-
-
-
-
-
-
-
-
-
-#define SELF_TEST_TIME                      100    // 1sec
-
-#define EMCO_SETPOINT                       4000  
-
+#define _STATUS_ION_PUMP_CURRENT_VERY_LOW        _WARNING_2  // This is set when the Ion Pump Current is less than 1uA
 
 
 
@@ -208,11 +178,6 @@ extern IonPumpControlData global_data_A37497;
 #define STATE_OPERATE                0x30
 #define STATE_FAULT_ION_PUMP_ON      0x40
 #define STATE_FAULT_ION_PUMP_OFF     0x50
-
-
-
-
-
 
 
 

@@ -44,8 +44,8 @@
       <compileType>
         <linkerTool>
           <linkerLibItems>
-            <linkerLibFileItem>../../ETM_LIBRARY/Version_02/lib/ETM_CORE_30F6014A.a</linkerLibFileItem>
-            <linkerLibFileItem>../../ETM_LIBRARY/Version_02/lib/ETM_LINAC_CAN_30F6014A.a</linkerLibFileItem>
+            <linkerLibFileItem>../../ETM_LIBRARY/Version_04/lib/ETM_CORE_30F6014A.a</linkerLibFileItem>
+            <linkerLibFileItem>../../ETM_LIBRARY/Version_04/lib/ETM_LINAC_CAN_30F6014A.a</linkerLibFileItem>
           </linkerLibItems>
         </linkerTool>
         <archiverTool>
@@ -219,7 +219,6 @@
         <property key="UART 1" value="true"/>
         <property key="UART 2" value="true"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>

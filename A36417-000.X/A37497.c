@@ -3,8 +3,6 @@
 #include "FIRMWARE_VERSION.h"
 #include "ETM_MATH.h"
 
-// DPARKER - switch to library rev 3
-
 
 void FlashLeds(void);
 unsigned int CheckFaultIonPumpOn(void);
@@ -121,7 +119,7 @@ void DoStateMachine(void){
 
 
 void DoA37497(void){
-  unsigned int ion_pump_voltage;
+  unsigned int minus_15v_calc_temp;
   unsigned int power_supply_fault;
 
   ETMCanSlaveDoCan();
@@ -142,8 +140,15 @@ void DoA37497(void){
     ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_ion_pump_current);
     ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_5V_monitor);
     ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_15V_monitor);
+    ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_minus_15V_divider_point);
+
+    // Calculate the negative 15V rail
+    minus_15v_calc_temp  = 3 * (global_data_A37497.analog_input_15V_monitor.reading_scaled_and_calibrated >> 1);
+    minus_15v_calc_temp -= 5 * (global_data_A37497.analog_input_minus_15V_divider_point.reading_scaled_and_calibrated >> 1);
+    global_data_A37497.analog_input_minus_15V_monitor.filtered_adc_reading = minus_15v_calc_temp;
     ETMAnalogScaleCalibrateADCReading(&global_data_A37497.analog_input_minus_15V_monitor);
-    
+
+
     // Data to be set to ECB
     slave_board_data.log_data[0] = global_data_A37497.analog_input_ion_pump_current_high_resolution.reading_scaled_and_calibrated;
     slave_board_data.log_data[1] = global_data_A37497.analog_input_ion_pump_current.reading_scaled_and_calibrated;
@@ -154,10 +159,11 @@ void DoA37497(void){
       slave_board_data.log_data[3] = global_data_A37497.analog_input_ion_pump_current_high_resolution.reading_scaled_and_calibrated;
     }
     
-    //DPARKER - Test this
-    //NEW EMCO regulation LOOP
     global_data_A37497.EMCO_control_setpoint = UpdateHVControl(global_data_A37497.analog_input_ion_pump_voltage.reading_scaled_and_calibrated, global_data_A37497.EMCO_control_setpoint);
     
+    if (global_data_A37497.control_state == STATE_FAULT_ION_PUMP_OFF) {
+      global_data_A37497.EMCO_control_setpoint = 0;
+    }
 
     WriteMCP4822(&U11_MCP4822, MCP4822_OUTPUT_A_4096, global_data_A37497.EMCO_control_setpoint);
 
@@ -173,9 +179,9 @@ void DoA37497(void){
     ETMCanSlaveSetDebugRegister(6, global_data_A37497.analog_input_ion_pump_current.reading_scaled_and_calibrated);
     ETMCanSlaveSetDebugRegister(7, global_data_A37497.analog_input_ion_pump_current_high_resolution.reading_scaled_and_calibrated);
     ETMCanSlaveSetDebugRegister(8, global_data_A37497.analog_input_ion_pump_voltage.reading_scaled_and_calibrated);
-    // DEBUG A,B,C,D are reserved for pid data local to UpdataePID    
+    ETMCanSlaveSetDebugRegister(9, global_data_A37497.analog_input_minus_15V_divider_point.filtered_adc_reading);
+    // DEBUG E is reserved for testing
     // DEBUG F is reserved for battery_startup_counter local to initialization function
-
 
     // -------------------- CHECK FOR FAULTS ------------------- //
 
@@ -224,10 +230,12 @@ void DoA37497(void){
       power_supply_fault = 1;
     }
 
+
     if (power_supply_fault) {
       _FAULT_POWER_RAIL_FAILURE = 1;
     }  else if (ETMCanSlaveGetSyncMsgResetEnable()) {
       _FAULT_POWER_RAIL_FAILURE = 0;
+      ETMCanSlaveSetDebugRegister(0xE, 0);
     }
   }  
 }
@@ -315,6 +323,8 @@ void InitializeA37497(void) {
   PIN_D_OUT_DONE_DRV_A = OLL_NOT_DONE;
   PIN_D_OUT_DONE_DRV_B = OLL_NOT_DONE;
 
+  PIN_D_OUT_15V_SUPPLY_ENABLE = OLL_15V_SUPPLY_ENABLE;
+
   // Initialize all I/O Registers
   TRISA = A37497_TRISA_VALUE;
   TRISB = A37497_TRISB_VALUE;
@@ -340,7 +350,7 @@ void InitializeA37497(void) {
   ETMEEPromUseExternal();
   ETMEEPromConfigureExternalDevice(EEPROM_SIZE_8K_BYTES, FCY_CLK, 400000, EEPROM_I2C_ADDRESS_0, 1);
 
-
+  
   //  if (ETMEEPromCheckOK()) { DPARKER add this library
   if (1) {
     // We only want to run the Ion Pump once every BATTERY_STARTUP_REPEATS to save power
@@ -447,15 +457,27 @@ void InitializeA37497(void) {
                            NO_COUNTER,
                            _15V_MONITOR_ABSOLUTE_TRIP_TIME);
 
-  ETMAnalogInitializeInput(&global_data_A37497.analog_input_minus_15V_monitor,
+  ETMAnalogInitializeInput(&global_data_A37497.analog_input_minus_15V_divider_point,
                            MACRO_DEC_TO_SCALE_FACTOR_16(MINUS_15V_MONITOR_SCALE_FACTOR),
+                           OFFSET_ZERO,
+                           ANALOG_INPUT_NO_CALIBRATION,
+                           NO_OVER_TRIP,
+            	           NO_UNDER_TRIP,
+                           NO_TRIP_SCALE,
+                           NO_FLOOR,
+                           NO_RELATIVE_COUNTER,
+                           NO_ABSOLUTE_COUNTER);
+
+
+  ETMAnalogInitializeInput(&global_data_A37497.analog_input_minus_15V_monitor,
+                           MACRO_DEC_TO_SCALE_FACTOR_16(1),
                            OFFSET_ZERO,
                            ANALOG_INPUT_NO_CALIBRATION,
                            MINUS_15V_MONITOR_OVER_TRIP_POINT,
             	           MINUS_15V_MONITOR_UNDER_TRIP_POINT,
                            NO_TRIP_SCALE,
                            NO_FLOOR,
-                           NO_COUNTER,
+                           NO_RELATIVE_COUNTER,
                            MINUS_15V_MONITOR_ABSOLUTE_TRIP_TIME);
 
 }
@@ -504,7 +526,7 @@ void __attribute__((interrupt, no_auto_psv)) _ADCInterrupt(void) {
     global_data_A37497.analog_input_ion_pump_current.adc_accumulator                  += ADCBUF2;
     global_data_A37497.analog_input_5V_monitor.adc_accumulator                        += ADCBUF3;
     global_data_A37497.analog_input_15V_monitor.adc_accumulator                       += ADCBUF4;
-    global_data_A37497.analog_input_minus_15V_monitor.adc_accumulator                 += ADCBUF5;
+    global_data_A37497.analog_input_minus_15V_divider_point.adc_accumulator                 += ADCBUF5;
 
   } else {
     // read ADCBUF 8-15
@@ -513,7 +535,7 @@ void __attribute__((interrupt, no_auto_psv)) _ADCInterrupt(void) {
     global_data_A37497.analog_input_ion_pump_current.adc_accumulator                  += ADCBUFA;
     global_data_A37497.analog_input_5V_monitor.adc_accumulator                        += ADCBUFB;
     global_data_A37497.analog_input_15V_monitor.adc_accumulator                       += ADCBUFC;
-    global_data_A37497.analog_input_minus_15V_monitor.adc_accumulator                 += ADCBUFD;
+    global_data_A37497.analog_input_minus_15V_divider_point.adc_accumulator                 += ADCBUFD;
   }
 
   global_data_A37497.accumulator_counter += 1;
@@ -540,9 +562,9 @@ void __attribute__((interrupt, no_auto_psv)) _ADCInterrupt(void) {
     global_data_A37497.analog_input_15V_monitor.filtered_adc_reading = global_data_A37497.analog_input_15V_monitor.adc_accumulator;
     global_data_A37497.analog_input_15V_monitor.adc_accumulator = 0;
     
-    global_data_A37497.analog_input_minus_15V_monitor.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 64 samples
-    global_data_A37497.analog_input_minus_15V_monitor.filtered_adc_reading = global_data_A37497.analog_input_minus_15V_monitor.adc_accumulator;
-    global_data_A37497.analog_input_minus_15V_monitor.adc_accumulator = 0;
+    global_data_A37497.analog_input_minus_15V_divider_point.adc_accumulator >>= 2;  // This is now a 16 bit number average of previous 64 samples
+    global_data_A37497.analog_input_minus_15V_divider_point.filtered_adc_reading = global_data_A37497.analog_input_minus_15V_divider_point.adc_accumulator;
+    global_data_A37497.analog_input_minus_15V_divider_point.adc_accumulator = 0;
 
     global_data_A37497.accumulator_counter = 0;
   }
