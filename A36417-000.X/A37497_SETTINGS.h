@@ -10,9 +10,9 @@
 
 #define EMCO_SETPOINT                       4000  
 
-#define MAX_BATTERY_POWERED_STARTUP_TIME   12000  // 120 seconds
+#define MAX_BATTERY_POWERED_STARTUP_TIME    2000  // 20 seconds
 #define MIN_BATTERY_POWERED_STARTUP_TIME    1000  // 10 seconds
-#define BATTERY_STARTUP_REPEATS               12  // The ion pump will run 1 out of every 12 starts (2 hours each)
+#define BATTERY_STARTUP_REPEATS                3  //12  // The ion pump will run 1 out of every 12 starts (2 hours each)
 
 
 

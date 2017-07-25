@@ -53,7 +53,7 @@
   RB9  - Digital Output - Test Point H
 
   RC14 - Done DRV A
-  RC15 - Done DRV B
+  RC13 - Done DRV B
 
   RF4  - Digital Output - Led Test Point B (Configured by CAN Module)
   RF5  - Digital Output - Led Test Point A (Configured by CAN Module)
@@ -72,14 +72,14 @@
 
 #define PIN_D_OUT_15V_SUPPLY_ENABLE _LATA6
 #define PIN_D_OUT_DONE_DRV_A        _LATC14
-#define PIN_D_OUT_DONE_DRV_B        _LATC15
+#define PIN_D_OUT_DONE_DRV_B        _LATC13
 
 #define OLL_NOT_DONE                1
 #define OLL_15V_SUPPLY_ENABLE       0
 
 #define A37497_TRISA_VALUE 0b1100111100111111
 #define A37497_TRISB_VALUE 0b1111110111111111
-#define A37497_TRISC_VALUE 0b0011111111111111
+#define A37497_TRISC_VALUE 0b1001111111111111
 #define A37497_TRISD_VALUE 0b1111111111111111
 #define A37497_TRISF_VALUE 0b1111111111001111
 #define A37497_TRISG_VALUE 0b1011111111111111
