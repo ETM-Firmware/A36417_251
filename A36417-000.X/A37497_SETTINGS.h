@@ -10,9 +10,12 @@
 
 #define EMCO_SETPOINT                       4000  
 
-#define MAX_BATTERY_POWERED_STARTUP_TIME    2000  // 20 seconds
+#define OUTPUT_SHORT_CIRCUIT_TEST_VOLTAGE  500    // 500 Volts
+#define MAX_DAC_SETTING_SHORT_CIRCUIT      0x0600 //~2 Volts Will be delivered to the EMCO
+
+#define MAX_BATTERY_POWERED_STARTUP_TIME   30000  // 300 seconds
 #define MIN_BATTERY_POWERED_STARTUP_TIME    1000  // 10 seconds
-#define BATTERY_STARTUP_REPEATS                3  //12  // The ion pump will run 1 out of every 12 starts (2 hours each)
+#define BATTERY_STARTUP_REPEATS               12  //12  // The ion pump will run 1 out of every 12 starts (2 hours each)
 
 
 

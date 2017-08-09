@@ -302,6 +302,16 @@ unsigned int UpdateHVControl(unsigned int current_reading, unsigned int current_
       new_dac_setting = MAX_DAC_SETPOINT;
     }
   }
+
+
+  if (current_reading < OUTPUT_SHORT_CIRCUIT_TEST_VOLTAGE) {
+    // Assume that the output has been shorted.
+    // Scale back VPROG appropriately
+    if (new_dac_setting >= MAX_DAC_SETTING_SHORT_CIRCUIT) {
+      new_dac_setting = MAX_DAC_SETTING_SHORT_CIRCUIT;
+    }
+  }
+
   return new_dac_setting;
 }
 
