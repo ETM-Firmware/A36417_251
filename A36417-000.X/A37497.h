@@ -17,7 +17,7 @@
 
 #define FCY_CLK     10000000
 #define FCY_CLK_MHZ 10
-
+#define __COMPILE_AS_A36417
 
 /*
 

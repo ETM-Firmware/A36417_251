@@ -407,7 +407,11 @@ void InitializeA37497(void) {
 
   // Initialize the CAN module
   ETMCanSlaveInitialize(CAN_PORT_1, FCY_CLK, ETM_CAN_ADDR_ION_PUMP_BOARD, _PIN_RG13, 4, _PIN_RA7, _PIN_RG12);
+#ifndef __COMPILE_AS_A36417
   ETMCanSlaveLoadConfiguration(37497, 0, FIRMWARE_AGILE_REV, FIRMWARE_BRANCH, FIRMWARE_MINOR_REV);
+#else
+  ETMCanSlaveLoadConfiguration(36417, 252, 4, 0, 0);
+#endif
 
 
   //Initialize analog input/output scaling
