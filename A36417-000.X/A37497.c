@@ -63,6 +63,9 @@ void DoStateMachine(void){
       if ((global_data_A37497.power_up_count > MIN_BATTERY_POWERED_STARTUP_TIME) && _STATUS_ION_PUMP_CURRENT_VERY_LOW) {
 	global_data_A37497.control_state = STATE_OPERATE;
       }
+      if ((global_data_A37497.power_up_count > MIN_BATTERY_POWERED_STARTUP_TIME) && (ETMCanSlaveGetComFaultStatus() == 0)) {
+	global_data_A37497.control_state = STATE_OPERATE;
+      }
     }
     break;
 
@@ -180,6 +183,7 @@ void DoA37497(void){
     ETMCanSlaveSetDebugRegister(7, global_data_A37497.analog_input_ion_pump_current_high_resolution.reading_scaled_and_calibrated);
     ETMCanSlaveSetDebugRegister(8, global_data_A37497.analog_input_ion_pump_voltage.reading_scaled_and_calibrated);
     ETMCanSlaveSetDebugRegister(9, global_data_A37497.analog_input_minus_15V_divider_point.filtered_adc_reading);
+    ETMCanSlaveSetDebugRegister(0xA, ETMCanSlaveGetComFaultStatus());
     // DEBUG E is reserved for testing
     // DEBUG F is reserved for battery_startup_counter local to initialization function
 
@@ -230,16 +234,27 @@ void DoA37497(void){
       power_supply_fault = 1;
     }
 
-
     if (power_supply_fault) {
-      _FAULT_POWER_RAIL_FAILURE = 1;
-    }  else if (ETMCanSlaveGetSyncMsgResetEnable()) {
-      _FAULT_POWER_RAIL_FAILURE = 0;
-      ETMCanSlaveSetDebugRegister(0xE, 0);
-    }
-  }  
-}
+      if (ETMCanSlaveGetSyncMsgResetEnable()) {
+	_FAULT_POWER_RAIL_FAILURE = 0;
+	ETMCanSlaveSetDebugRegister(0xE, 0);	
+	// DPARKER attempt to reset the power supply
+	PIN_D_OUT_15V_SUPPLY_ENABLE = !OLL_15V_SUPPLY_ENABLE;
+	__delay32(100000); // 10mS
+	PIN_D_OUT_15V_SUPPLY_ENABLE = OLL_15V_SUPPLY_ENABLE;
 
+	// Clear the fault counters
+	ETMAnalogClearFaultCounters(&global_data_A37497.analog_input_15V_monitor);
+	ETMAnalogClearFaultCounters(&global_data_A37497.analog_input_minus_15V_monitor);
+      } else {
+	_FAULT_POWER_RAIL_FAILURE = 1;
+      }
+    }  
+
+
+  }
+}
+  
 unsigned int CheckFaultIonPumpOn(void) {
   if (_FAULT_CAN_COMMUNICATION) {
     return 1;
@@ -407,11 +422,8 @@ void InitializeA37497(void) {
 
   // Initialize the CAN module
   ETMCanSlaveInitialize(CAN_PORT_1, FCY_CLK, ETM_CAN_ADDR_ION_PUMP_BOARD, _PIN_RG13, 4, _PIN_RA7, _PIN_RG12);
-#ifndef __COMPILE_AS_A36417
-  ETMCanSlaveLoadConfiguration(37497, 0, FIRMWARE_AGILE_REV, FIRMWARE_BRANCH, FIRMWARE_MINOR_REV);
-#else
-  ETMCanSlaveLoadConfiguration(36417, 252, 4, 0, 0);
-#endif
+  ETMCanSlaveLoadConfiguration(ASSEMBLY_NUMBER, ASSEMBLY_DASH, FIRMWARE_AGILE_REV, FIRMWARE_BRANCH, FIRMWARE_MINOR_REV);
+
 
 
   //Initialize analog input/output scaling

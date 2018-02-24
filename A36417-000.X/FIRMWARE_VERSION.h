@@ -1,9 +1,28 @@
 #ifndef FIRMWARE_VERSION_H
 #define	FIRMWARE_VERSION_H
 
+#define __COMPILE_AS_A36417_252
+
+#ifdef __COMPILE_AS_A36417_252
+#define ASSEMBLY_NUMBER     36417
+#define ASSEMBLY_DASH       252
+
+#define FIRMWARE_AGILE_REV  5
+#define FIRMWARE_BRANCH     0
+#define FIRMWARE_MINOR_REV  0
+
+#else
+#define ASSEMBLY_NUMBER     37497
+#define ASSEMBLY_DASH       0
+
 #define FIRMWARE_AGILE_REV  1
 #define FIRMWARE_BRANCH     0
 #define FIRMWARE_MINOR_REV  0
+
+#endif
+
+
+
 
 
 #endif	/* FIRMWARE_VERSION_H */

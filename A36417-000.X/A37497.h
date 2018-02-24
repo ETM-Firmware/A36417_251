@@ -17,7 +17,6 @@
 
 #define FCY_CLK     10000000
 #define FCY_CLK_MHZ 10
-#define __COMPILE_AS_A36417
 
 /*
 
@@ -67,6 +66,13 @@
 #define PIN_D_OUT_TEST_POINT_C      _LATA12
 #define PIN_D_OUT_TEST_POINT_D      _LATA13
 #define PIN_D_OUT_TEST_POINT_H      _LATB9
+#include <libpic30.h>
+#include "P1395_CAN_SLAVE.h"
+#include "ETM.h"
+
+#define FCY_CLK     10000000
+#define FCY_CLK_MHZ 10
+
 #define PIN_D_OUT_RESET_DETECT      _LATG14
 
 
