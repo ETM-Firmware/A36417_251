@@ -7,7 +7,7 @@
 void FlashLeds(void);
 unsigned int CheckFaultIonPumpOn(void);
 unsigned int CheckFaultIonPumpOff(void);
-
+void CheckForWaveguideArc(void);
 
 
 unsigned int UpdateHVControl(unsigned int current_reading, unsigned int current_dac_setting);
@@ -75,6 +75,12 @@ void DoStateMachine(void){
     _CONTROL_NOT_READY = 0;
     _STATUS_KEEP_HEATER_OFF = 0;
     while (global_data_A37497.control_state == STATE_OPERATE) {
+      CheckForWaveguideArc();
+      if (_FAULT_LINAC_WAVEGUIDE_ARC || _FAULT_MAGNETRON_WAVEGUIDE_ARC) {
+	_CONTROL_NOT_READY = 1;
+      } else {
+	_CONTROL_NOT_READY = 0;
+      }
       DoA37497();
       if (CheckFaultIonPumpOn()) {
 	global_data_A37497.control_state = STATE_FAULT_ION_PUMP_ON;
@@ -121,10 +127,29 @@ void DoStateMachine(void){
 }
 
 
+
+void CheckForWaveguideArc(void) {
+  if (ETMCanSlaveGetSyncMsgResetEnable()) {
+    _FAULT_LINAC_WAVEGUIDE_ARC = 0;
+    _FAULT_MAGNETRON_WAVEGUIDE_ARC = 0;
+  }
+  
+  if (global_data_A37497.linac_waveguide_arc_detected) {
+    _FAULT_LINAC_WAVEGUIDE_ARC = 1;
+  }
+  
+  if (global_data_A37497.magnetron_waveguide_arc_detected) {
+    _FAULT_MAGNETRON_WAVEGUIDE_ARC = 1;
+  }
+  
+  global_data_A37497.linac_waveguide_arc_detected = 0;
+  global_data_A37497.magnetron_waveguide_arc_detected = 0;
+}
+
 void DoA37497(void){
   unsigned int minus_15v_calc_temp;
   unsigned int power_supply_fault;
-
+  
   ETMCanSlaveDoCan();
 
   if (ETMCanSlaveGetComFaultStatus()) {
@@ -506,6 +531,21 @@ void InitializeA37497(void) {
                            NO_RELATIVE_COUNTER,
                            MINUS_15V_MONITOR_ABSOLUTE_TRIP_TIME);
 
+
+
+  // Setup Interrupt on INT3
+  _INT3IF = 0;		// Clear Interrupt flag
+  _INT3EP = 1; 	        // Interrupt on falling edge
+  _INT3IP = 7;		// Set interrupt to high priority
+  _INT3IE = 1;		// Enable INT3 Interrupt
+
+
+  // Setup Interrupt on INT4
+  _INT4IF = 0;		// Clear Interrupt flag
+  _INT4EP = 1; 	        // Interrupt on falling edge
+  _INT4IP = 7;		// Set interrupt to high priority
+  _INT4IE = 1;		// Enable INT4 Interrupt
+    
 }
 
 
@@ -596,6 +636,36 @@ void __attribute__((interrupt, no_auto_psv)) _ADCInterrupt(void) {
   }
 }
 
+
+
+void __attribute__((interrupt, no_auto_psv)) _INT3Interrupt(void) {
+  // Linac Waveguide ARC INPUT
+  _INT3IF = 0;
+  __delay32(20);  // wait 2 uS
+
+  if (PIN_LINAC_WAVEGUIDE_ARC_INPUT == ILL_ARC_ACTIVE) {
+    global_data_A37497.linac_waveguide_arc_detected = 1;
+  }
+  
+  if (PIN_MAGNETRON_WAVEGUIDE_ARC_INPUT == ILL_ARC_ACTIVE) {
+    global_data_A37497.magnetron_waveguide_arc_detected = 1;
+  }
+}
+
+
+void __attribute__((interrupt, no_auto_psv)) _INT4Interrupt(void) {
+  // Magnetron Waveguide ARC INPUT
+  _INT4IF = 0;
+  __delay32(20);  // wait 2 uS
+
+  if (PIN_MAGNETRON_WAVEGUIDE_ARC_INPUT == ILL_ARC_ACTIVE) {
+    global_data_A37497.magnetron_waveguide_arc_detected = 1;
+  }
+  
+  if (PIN_LINAC_WAVEGUIDE_ARC_INPUT == ILL_ARC_ACTIVE) {
+    global_data_A37497.linac_waveguide_arc_detected = 1;
+  }
+}
 
 
 

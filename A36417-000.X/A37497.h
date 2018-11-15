@@ -80,6 +80,7 @@
 #define PIN_D_OUT_DONE_DRV_A        _LATC14
 #define PIN_D_OUT_DONE_DRV_B        _LATC13
 
+
 #define OLL_NOT_DONE                1
 #define OLL_15V_SUPPLY_ENABLE       0
 
@@ -89,6 +90,11 @@
 #define A37497_TRISD_VALUE 0b1111111111111111
 #define A37497_TRISF_VALUE 0b1111111111001111
 #define A37497_TRISG_VALUE 0b1011111111111111
+
+#define PIN_MAGNETRON_WAVEGUIDE_ARC_INPUT   _RA15
+#define PIN_LINAC_WAVEGUIDE_ARC_INPUT       _RA14
+#define ILL_ARC_ACTIVE                      0
+
 
 
 // ------------------------ CONFIGURE ADC MODULE ------------------- //
@@ -147,7 +153,10 @@ typedef struct{
 
   unsigned int EMCO_control_setpoint;
   unsigned int power_up_count;
-    
+
+  unsigned int linac_waveguide_arc_detected;
+  unsigned int magnetron_waveguide_arc_detected;
+  
 } IonPumpControlData;
 
 
@@ -172,6 +181,9 @@ typedef struct{
 //#define _FAULT_ION_PUMP_OVER_VOLTAGE             _FAULT_2 // - THIS FAULT IS NOT USED
 #define _FAULT_ION_PUMP_UNDER_VOLTAGE            _FAULT_3
 #define _FAULT_POWER_RAIL_FAILURE                _FAULT_4
+#define _FAULT_LINAC_WAVEGUIDE_ARC               _FAULT_5
+#define _FAULT_MAGNETRON_WAVEGUIDE_ARC           _FAULT_6
+
 
 #define _STATUS_ION_PUMP_HAS_OVER_CURRENT        _WARNING_0  // This is used by the ECB
 #define _STATUS_KEEP_HEATER_OFF                  _WARNING_1  // This will be used by the ECB Someday
