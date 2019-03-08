@@ -292,6 +292,14 @@ unsigned int CheckFaultIonPumpOn(void) {
   if (_FAULT_ION_PUMP_UNDER_VOLTAGE) {
     return 1;
   }
+
+  if (_FAULT_LINAC_WAVEGUIDE_ARC) {
+    return 1;
+  }
+
+  if (_FAULT_MAGNETRON_WAVEGUIDE_ARC) {
+    return 1;
+  }
   
   return 0;
 }
