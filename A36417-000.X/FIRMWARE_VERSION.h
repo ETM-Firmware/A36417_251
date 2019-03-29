@@ -13,7 +13,7 @@
 
 #else
 #define ASSEMBLY_NUMBER     37497
-#define ASSEMBLY_DASH       0
+#define ASSEMBLY_DASH       100
 
 #define FIRMWARE_AGILE_REV  2
 #define FIRMWARE_BRANCH     0
