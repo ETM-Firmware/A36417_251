@@ -75,13 +75,12 @@ void DoStateMachine(void){
     _CONTROL_NOT_READY = 0;
     _STATUS_KEEP_HEATER_OFF = 0;
     while (global_data_A37497.control_state == STATE_OPERATE) {
-      CheckForWaveguideArc();
+      DoA37497();
       if (_FAULT_LINAC_WAVEGUIDE_ARC || _FAULT_MAGNETRON_WAVEGUIDE_ARC) {
 	_CONTROL_NOT_READY = 1;
       } else {
 	_CONTROL_NOT_READY = 0;
       }
-      DoA37497();
       if (CheckFaultIonPumpOn()) {
 	global_data_A37497.control_state = STATE_FAULT_ION_PUMP_ON;
       }
@@ -151,7 +150,8 @@ void DoA37497(void){
   unsigned int power_supply_fault;
   
   ETMCanSlaveDoCan();
-
+  CheckForWaveguideArc();
+  
   if (ETMCanSlaveGetComFaultStatus()) {
     _FAULT_CAN_COMMUNICATION = 1;
   } else if (ETMCanSlaveGetSyncMsgResetEnable()) {
